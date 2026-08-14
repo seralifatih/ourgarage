@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'database_holder.dart';
+import 'household_entitlement_repository.dart';
 import 'reminder_rule_repository.dart';
 import 'service_record_repository.dart';
 import 'vehicle_repository.dart';
@@ -25,4 +26,11 @@ ServiceRecordRepository serviceRecordRepository(Ref ref) {
 @Riverpod(keepAlive: true)
 ReminderRuleRepository reminderRuleRepository(Ref ref) {
   return ReminderRuleRepository(DatabaseHolder.instance.reminderRuleDao);
+}
+
+@Riverpod(keepAlive: true)
+HouseholdEntitlementRepository householdEntitlementRepository(Ref ref) {
+  return HouseholdEntitlementRepository(
+    DatabaseHolder.instance.householdEntitlementDao,
+  );
 }

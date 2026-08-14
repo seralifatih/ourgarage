@@ -1,6 +1,8 @@
 import 'package:drift/drift.dart';
 
+import '../../sync/sync_payloads.dart';
 import '../database.dart';
+import '../sync_enqueue.dart';
 
 part 'vehicle_dao.g.dart';
 
@@ -30,16 +32,55 @@ class VehicleDao extends DatabaseAccessor<AppDatabase> with _$VehicleDaoMixin {
     )..where((v) => v.id.equals(id) & v.deletedAt.isNull())).getSingleOrNull();
   }
 
+  /// Every live vehicle, oldest first. The migration's read side.
+  Future<List<Vehicle>> getAllVehicles() {
+    return (select(vehicles)
+          ..where((v) => v.deletedAt.isNull())
+          ..orderBy([(v) => OrderingTerm.asc(v.createdAt)]))
+        .get();
+  }
+
+  /// Stamps [householdId] onto the given vehicles, marking them as synced.
+  ///
+  /// Deliberately does not touch `updatedAt`: this is a sync bookkeeping write,
+  /// not a user edit, and bumping the timestamp would make every vehicle look
+  /// freshly modified to whatever reconciles changes later.
+  Future<int> assignHousehold(List<String> ids, String householdId) {
+    if (ids.isEmpty) return Future.value(0);
+
+    return (update(vehicles)..where((v) => v.id.isIn(ids))).write(
+      VehiclesCompanion(householdId: Value(householdId)),
+    );
+  }
+
   Future<void> insertVehicle(VehiclesCompanion vehicle) {
-    return into(vehicles).insert(vehicle);
+    // Write and queue entry share a transaction: a change that lands locally
+    // without a queue row would never sync, and nothing would ever notice.
+    return transaction(() async {
+      await into(vehicles).insert(vehicle);
+      await attachedDatabase.enqueueVehicle(
+        vehicle.id.value,
+        SyncOperation.upsert,
+        vehicle.updatedAt.value,
+      );
+    });
   }
 
   /// Applies [changes] to the vehicle with [id]. Returns whether a row matched.
-  Future<bool> updateVehicle(String id, VehiclesCompanion changes) async {
-    final updated = await (update(
-      vehicles,
-    )..where((v) => v.id.equals(id) & v.deletedAt.isNull())).write(changes);
-    return updated > 0;
+  Future<bool> updateVehicle(String id, VehiclesCompanion changes) {
+    return transaction(() async {
+      final updated = await (update(
+        vehicles,
+      )..where((v) => v.id.equals(id) & v.deletedAt.isNull())).write(changes);
+      if (updated == 0) return false;
+
+      await attachedDatabase.enqueueVehicle(
+        id,
+        SyncOperation.upsert,
+        changes.updatedAt.present ? changes.updatedAt.value : DateTime.now(),
+      );
+      return true;
+    });
   }
 
   /// Number of vehicles that count against the free-tier limit.
@@ -87,6 +128,16 @@ class VehicleDao extends DatabaseAccessor<AppDatabase> with _$VehicleDaoMixin {
           updatedAt: Value(deletedAt),
         ),
       );
+
+      // The tombstone has to propagate to every row it touched, not just the
+      // vehicle: a peer that only heard about the vehicle would keep showing
+      // its history.
+      await attachedDatabase.enqueueVehicle(
+        id,
+        SyncOperation.delete,
+        deletedAt,
+      );
+      await attachedDatabase.enqueueChildrenOf(id, deletedAt);
     });
   }
 }

@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'app_routes.dart';
+import 'features/household/widgets/join_household_screen.dart';
+import 'features/paywall/paywall_screen.dart';
 import 'features/reminders/reminder_rule_form_screen.dart';
 import 'features/reminders/update_odometers_screen.dart';
 import 'features/reminders/vehicle_reminders_list_screen.dart';
@@ -10,28 +11,6 @@ import 'features/settings/settings_screen.dart';
 import 'features/vehicles/vehicle_detail_screen.dart';
 import 'features/vehicles/vehicle_form_screen.dart';
 import 'features/vehicles/vehicle_list_screen.dart';
-
-/// Placeholder for a screen that hasn't been built yet.
-///
-/// Keeps the routing graph complete and navigable so the wiring can be
-/// exercised before every destination exists.
-class _PlaceholderScreen extends StatelessWidget {
-  const _PlaceholderScreen({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(
-        child: Text('$title — coming soon', style: theme.textTheme.titleMedium),
-      ),
-    );
-  }
-}
 
 final GoRouter appRouter = GoRouter(
   routes: [
@@ -101,8 +80,12 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const SettingsScreen(),
     ),
     GoRoute(
+      path: AppRoutes.joinHousehold,
+      builder: (context, state) => const JoinHouseholdScreen(),
+    ),
+    GoRoute(
       path: AppRoutes.paywall,
-      builder: (context, state) => const _PlaceholderScreen(title: 'Paywall'),
+      builder: (context, state) => const PaywallScreen(),
     ),
   ],
 );

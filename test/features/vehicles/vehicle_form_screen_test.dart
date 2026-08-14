@@ -398,7 +398,7 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 100));
 
-        expect(find.text('Paywall — coming soon'), findsOneWidget);
+        expect(find.text('Unlock your whole garage'), findsOneWidget);
 
         final vehicles = await db.select(db.vehicles).get();
         expect(

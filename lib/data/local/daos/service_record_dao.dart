@@ -1,6 +1,8 @@
 import 'package:drift/drift.dart';
 
+import '../../sync/sync_payloads.dart';
 import '../database.dart';
+import '../sync_enqueue.dart';
 
 part 'service_record_dao.g.dart';
 
@@ -29,45 +31,86 @@ class ServiceRecordDao extends DatabaseAccessor<AppDatabase>
     )..where((r) => r.id.equals(id) & r.deletedAt.isNull())).getSingleOrNull();
   }
 
+  /// Every live service record across all vehicles. The migration's read side.
+  Future<List<ServiceRecord>> getAllRecords() {
+    return (select(serviceRecords)..where((r) => r.deletedAt.isNull())).get();
+  }
+
   Future<void> insertRecord(ServiceRecordsCompanion record) {
-    return into(serviceRecords).insert(record);
+    return transaction(() async {
+      await into(serviceRecords).insert(record);
+      await attachedDatabase.enqueueServiceRecord(
+        record.id.value,
+        SyncOperation.upsert,
+        record.updatedAt.value,
+      );
+    });
   }
 
-  Future<bool> updateRecord(String id, ServiceRecordsCompanion changes) async {
-    final updated = await (update(
-      serviceRecords,
-    )..where((r) => r.id.equals(id) & r.deletedAt.isNull())).write(changes);
-    return updated > 0;
+  Future<bool> updateRecord(String id, ServiceRecordsCompanion changes) {
+    return transaction(() async {
+      final updated = await (update(
+        serviceRecords,
+      )..where((r) => r.id.equals(id) & r.deletedAt.isNull())).write(changes);
+      if (updated == 0) return false;
+
+      await attachedDatabase.enqueueServiceRecord(
+        id,
+        SyncOperation.upsert,
+        changes.updatedAt.present ? changes.updatedAt.value : DateTime.now(),
+      );
+      return true;
+    });
   }
 
-  Future<bool> softDeleteRecord(String id, DateTime deletedAt) async {
-    final updated =
-        await (update(
-          serviceRecords,
-        )..where((r) => r.id.equals(id) & r.deletedAt.isNull())).write(
-          ServiceRecordsCompanion(
-            deletedAt: Value(deletedAt),
-            updatedAt: Value(deletedAt),
-          ),
-        );
-    return updated > 0;
+  Future<bool> softDeleteRecord(String id, DateTime deletedAt) {
+    return transaction(() async {
+      final updated =
+          await (update(
+            serviceRecords,
+          )..where((r) => r.id.equals(id) & r.deletedAt.isNull())).write(
+            ServiceRecordsCompanion(
+              deletedAt: Value(deletedAt),
+              updatedAt: Value(deletedAt),
+            ),
+          );
+      if (updated == 0) return false;
+
+      await attachedDatabase.enqueueServiceRecord(
+        id,
+        SyncOperation.delete,
+        deletedAt,
+      );
+      return true;
+    });
   }
 
   /// Clears a record's tombstone, bringing it back into the active views.
   ///
   /// Deliberately matches on rows that *are* deleted — the inverse of every
   /// other method here — so that an undo can find its target.
-  Future<bool> restoreRecord(String id, DateTime updatedAt) async {
-    final updated =
-        await (update(
-          serviceRecords,
-        )..where((r) => r.id.equals(id) & r.deletedAt.isNotNull())).write(
-          ServiceRecordsCompanion(
-            deletedAt: const Value(null),
-            updatedAt: Value(updatedAt),
-          ),
-        );
-    return updated > 0;
+  Future<bool> restoreRecord(String id, DateTime updatedAt) {
+    return transaction(() async {
+      final updated =
+          await (update(
+            serviceRecords,
+          )..where((r) => r.id.equals(id) & r.deletedAt.isNotNull())).write(
+            ServiceRecordsCompanion(
+              deletedAt: const Value(null),
+              updatedAt: Value(updatedAt),
+            ),
+          );
+      if (updated == 0) return false;
+
+      // An undo is an ordinary change carrying a newer updatedAt, so
+      // last-write-wins lets it beat the delete it is undoing.
+      await attachedDatabase.enqueueServiceRecord(
+        id,
+        SyncOperation.upsert,
+        updatedAt,
+      );
+      return true;
+    });
   }
 
   /// Inserts [record] and, when its odometer reading exceeds the vehicle's
@@ -84,6 +127,11 @@ class ServiceRecordDao extends DatabaseAccessor<AppDatabase>
   }) {
     return transaction(() async {
       await into(serviceRecords).insert(record);
+      await attachedDatabase.enqueueServiceRecord(
+        record.id.value,
+        SyncOperation.upsert,
+        now,
+      );
 
       if (odometer == null) return;
 
@@ -100,6 +148,12 @@ class ServiceRecordDao extends DatabaseAccessor<AppDatabase>
           odometerUpdatedAt: Value(now),
           updatedAt: Value(now),
         ),
+      );
+      // The vehicle changed too, so it needs its own queue row.
+      await attachedDatabase.enqueueVehicle(
+        vehicleId,
+        SyncOperation.upsert,
+        now,
       );
     });
   }

@@ -9,6 +9,7 @@ import 'package:ourgarage/data/local/database.dart';
 import 'package:ourgarage/data/repositories/database_holder.dart';
 
 import 'support/fake_notification_plugin.dart';
+import 'support/fake_purchases_api.dart';
 
 void main() {
   late AppDatabase db;
@@ -29,7 +30,10 @@ void main() {
   Future<void> go(WidgetTester tester, String location) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [fakeNotificationServiceOverride()],
+        overrides: [
+          fakeNotificationServiceOverride(),
+          fakePurchaseServiceOverride(),
+        ],
         child: const OurGarageApp(),
       ),
     );
@@ -109,7 +113,7 @@ void main() {
   testWidgets('/paywall resolves', (tester) async {
     await go(tester, AppRoutes.paywall);
 
-    expect(find.text('Paywall — coming soon'), findsOneWidget);
+    expect(find.text('Unlock your whole garage'), findsOneWidget);
 
     await teardownTree(tester);
   });

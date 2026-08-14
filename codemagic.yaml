@@ -1,0 +1,254 @@
+# Codemagic CI/CD — OurGarage
+#
+# The point of this file is that shipping iOS requires no Mac and no local
+# certificates. Signing happens through the App Store Connect API key
+# integration; nothing secret lives in the repository.
+#
+# Two workflows:
+#   ios-release  — automatic on master, straight to TestFlight
+#   ios-debug    — manual, any branch, also to TestFlight
+#
+# Both publish to TestFlight because the only physical test device is an iPad
+# on iOS 15.8.8, so every test cycle goes through TestFlight regardless.
+# The project's deployment target is iOS 15.0, so that device is supported —
+# do not raise the target above 15.0 without a replacement device.
+
+definitions:
+  # ---------------------------------------------------------------------------
+  # Shared pieces. Anchors rather than repetition: the release and debug
+  # workflows must build the same way, and two copies would drift.
+  # ---------------------------------------------------------------------------
+
+  instance: &instance
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+
+  environment: &environment
+    # Xcode 26 is not optional. Apple requires builds against the iOS 26 SDK,
+    # and an older image is rejected at upload rather than at build time —
+    # so the failure arrives late, after a green build, looking like a
+    # publishing problem.
+    xcode: 26.0
+    flutter: stable
+    cocoapods: default
+
+  # Injected via --dart-define; see the build steps. Create these groups in
+  # Codemagic → Environment variables and mark every value secure.
+  #
+  #   supabase       SUPABASE_URL, SUPABASE_ANON_KEY
+  #   revenuecat     REVENUECAT_IOS_KEY
+  #   appstore       APP_STORE_APPLE_ID
+  #
+  # Nothing here is committed. The Supabase anon key is a publishable client
+  # credential and is safe in the shipped binary — every table it can reach is
+  # behind RLS — but it is still kept out of git so that rotating it is a
+  # dashboard change rather than a commit.
+  groups: &groups
+    - supabase
+    - revenuecat
+    - appstore
+
+  cache: &cache
+    cache_paths:
+      - $HOME/.pub-cache
+      - $HOME/Library/Caches/CocoaPods
+      - $CM_BUILD_DIR/ios/Pods
+      # Not $CM_BUILD_DIR/build or .dart_tool: generated sources are cheap to
+      # rebuild and a stale cache there produces confusing analyzer errors.
+
+  scripts:
+    - &pub_get
+      name: Flutter pub get
+      script: flutter pub get
+
+    - &codegen
+      name: Generate code (drift + riverpod)
+      script: |
+        # --delete-conflicting-outputs is accepted but ignored by build_runner
+        # 2.15.x, which resolves conflicts itself. Kept because it is harmless
+        # and because removing it silently changes behaviour if the pinned
+        # version is ever rolled back.
+        dart run build_runner build --delete-conflicting-outputs
+
+    - &analyze
+      name: Analyze
+      script: flutter analyze
+
+    - &test
+      name: Test
+      script: |
+        # --machine so a failure is reported as a structured test result in the
+        # Codemagic UI rather than only as a wall of log output.
+        flutter test --machine > test-report.json || EXIT=$?
+        exit ${EXIT:-0}
+      test_report: test-report.json
+
+    - &pod_install
+      name: CocoaPods install
+      script: |
+        # Explicit, before the Flutter build, so a pod resolution failure is
+        # its own red step instead of being buried inside `flutter build ipa`.
+        find . -name "Podfile" -execdir pod install \;
+
+  publishing: &testflight
+    app_store_connect:
+      auth: integration
+      submit_to_testflight: true
+      # Deliberately NOT submit_to_app_store: releasing to the public is a
+      # decision, not a side effect of merging.
+      #
+      # No beta_groups listed, so builds go to App Store Connect users only.
+      # Add group names here once there are external testers — note that adds
+      # a Beta App Review wait to every build.
+
+    email:
+      recipients:
+        - h.f.ilhan@gmail.com
+      notify:
+        success: false # TestFlight already emails on a new build
+        failure: true
+
+workflows:
+  # ---------------------------------------------------------------------------
+  # Release: master → TestFlight, automatically
+  # ---------------------------------------------------------------------------
+  ios-release:
+    name: iOS release → TestFlight
+    <<: *instance
+
+    environment:
+      <<: *environment
+      groups: *groups
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.ourgarage.ourgarage
+      vars:
+        BUNDLE_ID: com.ourgarage.ourgarage
+
+    integrations:
+      # The whole reason no Mac is needed. Create this in Codemagic under
+      # Teams → Integrations → App Store Connect, and keep the name in sync.
+      app_store_connect: OurGarage ASC Key
+
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        # master, not main — this repository's default branch is master, and a
+        # pattern of `main` would simply never fire.
+        - pattern: master
+          include: true
+          source: true
+      # Not on tags or PRs: a PR build would consume a TestFlight build number
+      # for something that may never merge.
+      cancel_previous_builds: true
+
+    cache: *cache
+
+    scripts:
+      - *pub_get
+      - *codegen
+      - *analyze
+      - *test
+      - *pod_install
+
+      - name: Set build number from Codemagic
+        script: |
+          # App Store Connect rejects a duplicate build number, so it comes
+          # from the build counter rather than pubspec.yaml, which nobody
+          # remembers to bump.
+          BUILD_NUMBER=$(($(app-store-connect get-latest-testflight-build-number \
+            "$APP_STORE_APPLE_ID" --platform IOS) + 1))
+          echo "Building as $BUILD_NUMBER"
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> $CM_ENV
+
+      - name: Build IPA
+        script: |
+          flutter build ipa --release \
+            --build-number="$BUILD_NUMBER" \
+            --dart-define=SUPABASE_URL="$SUPABASE_URL" \
+            --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY" \
+            --dart-define=REVENUECAT_API_KEY="$REVENUECAT_IOS_KEY"
+          # No --export-options-plist. The `ios_signing` block above makes
+          # Codemagic apply the fetched profile to the Xcode project before
+          # this runs; pointing at a plist path that may not exist turns a
+          # working build into a late, confusing failure.
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      # Symbols, so a crash report from the iPad is readable rather than a
+      # list of hex addresses.
+      - build/ios/archive/Runner.xcarchive/dSYMs/**/*.dSYM
+      - flutter_drive.log
+
+    publishing: *testflight
+
+  # ---------------------------------------------------------------------------
+  # Debug: any branch, manual, also to TestFlight
+  # ---------------------------------------------------------------------------
+  #
+  # Not a simulator or debug-mode build. The only test device is a physical
+  # iPad, reachable only through TestFlight, so a "debug" cycle still needs a
+  # signed release-configuration IPA. What differs is the trigger (manual, any
+  # branch) and that analysis and tests do not block the build — the point of
+  # this workflow is getting a branch onto the device to look at it, and being
+  # stopped by a failing test defeats that.
+  ios-debug:
+    name: iOS debug branch → TestFlight (manual)
+    <<: *instance
+
+    environment:
+      <<: *environment
+      groups: *groups
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.ourgarage.ourgarage
+      vars:
+        BUNDLE_ID: com.ourgarage.ourgarage
+
+    integrations:
+      app_store_connect: OurGarage ASC Key
+
+    # No `triggering:` block at all — this workflow runs only when started by
+    # hand from the Codemagic UI or API, on whichever branch is selected there.
+
+    cache: *cache
+
+    scripts:
+      - *pub_get
+      - *codegen
+
+      - name: Analyze (non-blocking)
+        script: flutter analyze || echo "Analyzer issues — not blocking a debug build"
+
+      - name: Test (non-blocking)
+        script: |
+          flutter test --machine > test-report.json || \
+            echo "Tests failed — not blocking a debug build"
+        test_report: test-report.json
+
+      - *pod_install
+
+      - name: Set build number from Codemagic
+        script: |
+          BUILD_NUMBER=$(($(app-store-connect get-latest-testflight-build-number \
+            "$APP_STORE_APPLE_ID" --platform IOS) + 1))
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> $CM_ENV
+
+      - name: Build IPA
+        script: |
+          # Same keys as release. Point the groups at a separate Supabase
+          # project if you would rather branch builds not write to production
+          # data — the workflow does not care which project it is given.
+          flutter build ipa --release \
+            --build-number="$BUILD_NUMBER" \
+            --dart-define=SUPABASE_URL="$SUPABASE_URL" \
+            --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY" \
+            --dart-define=REVENUECAT_API_KEY="$REVENUECAT_IOS_KEY" \
+            --dart-define=BUILD_CHANNEL=debug
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - build/ios/archive/Runner.xcarchive/dSYMs/**/*.dSYM
+
+    publishing: *testflight

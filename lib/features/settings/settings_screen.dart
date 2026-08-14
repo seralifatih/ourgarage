@@ -1,10 +1,17 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../app_routes.dart';
 import '../../data/models/service_type.dart';
+import '../../data/repositories/premium_status_provider.dart';
 import '../../data/repositories/providers.dart';
+import '../../services/auth_service_provider.dart';
 import '../../services/notification_service_provider.dart';
+import '../../services/purchase_service_provider.dart';
+import '../paywall/paywall_providers.dart';
 
 /// App settings.
 ///
@@ -44,8 +51,114 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ),
       body: ListView(
-        children: [if (_debugToolsRevealed) const _DebugNotificationSection()],
+        children: [
+          const _PurchasesSection(),
+          const _HouseholdSection(),
+          if (_debugToolsRevealed) const _DebugNotificationSection(),
+        ],
       ),
+    );
+  }
+}
+
+/// Purchase-related settings.
+///
+/// "Restore purchases" is not optional: Apple rejects apps that sell a
+/// non-consumable without an in-app way to restore it on a new device or
+/// after a reinstall.
+class _PurchasesSection extends ConsumerStatefulWidget {
+  const _PurchasesSection();
+
+  @override
+  ConsumerState<_PurchasesSection> createState() => _PurchasesSectionState();
+}
+
+class _PurchasesSectionState extends ConsumerState<_PurchasesSection> {
+  bool _restoring = false;
+
+  Future<void> _restore() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final purchases = ref.read(purchaseServiceProvider);
+
+    setState(() => _restoring = true);
+
+    String message;
+    try {
+      final isPremium = await purchases.restorePurchases();
+      message = isPremium
+          ? 'Purchases restored'
+          : 'No previous purchases found';
+    } on PlatformException catch (error) {
+      message = error.message ?? 'Could not restore purchases';
+    } finally {
+      if (mounted) setState(() => _restoring = false);
+    }
+
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isPremium = ref.watch(premiumStatusProvider);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ListTile(
+          title: const Text('OurGarage Premium'),
+          subtitle: Text(isPremium ? 'Active' : 'Not active'),
+          // Already-premium users have nothing to buy, so the row stops being
+          // a paywall entry point once the entitlement is active.
+          trailing: isPremium ? null : const Icon(Icons.chevron_right),
+          onTap: isPremium ? null : () => context.push(AppRoutes.paywall),
+        ),
+        ListTile(
+          title: const Text('Restore purchases'),
+          subtitle: const Text(
+            'Already bought Premium? Restore it on this device.',
+          ),
+          trailing: _restoring
+              ? const SizedBox.square(
+                  dimension: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : null,
+          onTap: _restoring ? null : _restore,
+        ),
+      ],
+    );
+  }
+}
+
+/// "Join a household" — the second and only other trigger for auth, alongside
+/// "Share with household" on a vehicle.
+///
+/// Shown to anyone not already in a household, signed in or not: a signed-out
+/// user can join (they'll be asked to sign in as part of it), and a signed-in
+/// user who never shared their own garage has no household yet either. Once
+/// they're in one, the row has nothing left to do, so it disappears rather
+/// than sitting there as a dead tap target.
+class _HouseholdSection extends ConsumerWidget {
+  const _HouseholdSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final householdId = ref.watch(currentHouseholdIdProvider);
+
+    // While loading, and on error, default to showing the row: a stale "no
+    // household" read means a spurious extra tap into a screen that then
+    // finds out the real state, which is far better than a row that
+    // disappears and reappears as connectivity comes and goes.
+    final alreadyInHousehold = householdId.asData?.value != null;
+    if (alreadyInHousehold) return const SizedBox.shrink();
+
+    return ListTile(
+      title: const Text('Join a household'),
+      subtitle: const Text('Have an invite code? Join to share a garage.'),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => context.push(AppRoutes.joinHousehold),
     );
   }
 }
@@ -135,6 +248,8 @@ class _DebugNotificationSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final purchases = ref.watch(purchaseServiceProvider);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -157,6 +272,25 @@ class _DebugNotificationSection extends ConsumerWidget {
           title: const Text('Debug: print pending notifications'),
           subtitle: const Text('Logs the pending count, ids and titles'),
           onTap: () => _printPendingNotifications(context, ref),
+        ),
+        // Forces PaywallScreen's "no offering available" fallback, so it can
+        // be verified on-device without airplane mode — which would also kill
+        // an in-flight sandbox purchase mid-test.
+        StatefulBuilder(
+          builder: (context, setState) {
+            return SwitchListTile(
+              title: const Text('Debug: force no offerings on paywall'),
+              subtitle: const Text(
+                'Simulates RevenueCat returning no products, without '
+                'breaking connectivity',
+              ),
+              value: purchases.debugForceNoOfferings,
+              onChanged: (value) {
+                setState(() => purchases.debugForceNoOfferings = value);
+                ref.invalidate(currentOfferingProvider);
+              },
+            );
+          },
         ),
       ],
     );

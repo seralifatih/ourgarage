@@ -7,19 +7,30 @@ import 'package:go_router/go_router.dart';
 import 'package:ourgarage/data/local/database.dart';
 import 'package:ourgarage/data/models/service_type.dart';
 import 'package:ourgarage/data/repositories/database_holder.dart';
+import 'package:ourgarage/data/repositories/premium_status_provider.dart';
 import 'package:ourgarage/features/vehicles/vehicle_detail_screen.dart';
+
+import '../../support/fake_auth_backend.dart';
 
 const _vehicleId = 'v1';
 
 /// Pumps the detail screen behind a real router, so `context.push`/`go` work
 /// and pushed destinations can be asserted on.
-Future<void> _pumpDetail(WidgetTester tester) async {
+Future<void> _pumpDetail(
+  WidgetTester tester, {
+  bool premium = false,
+  FakeAuthBackend? auth,
+}) async {
   final router = GoRouter(
     initialLocation: '/vehicle/$_vehicleId',
     routes: [
       GoRoute(
         path: '/',
         builder: (_, _) => const Scaffold(body: Text('garage list')),
+      ),
+      GoRoute(
+        path: '/paywall',
+        builder: (_, _) => const Scaffold(body: Text('paywall')),
       ),
       GoRoute(
         path: '/vehicle/:id',
@@ -50,7 +61,13 @@ Future<void> _pumpDetail(WidgetTester tester) async {
   );
 
   await tester.pumpWidget(
-    ProviderScope(child: MaterialApp.router(routerConfig: router)),
+    ProviderScope(
+      overrides: [
+        premiumStatusProvider.overrideWith((ref) => premium),
+        fakeAuthServiceOverride(auth),
+      ],
+      child: MaterialApp.router(routerConfig: router),
+    ),
   );
   await _settle(tester);
 }
@@ -435,6 +452,59 @@ void main() {
       await _settle(tester);
 
       expect(find.text('edit vehicle'), findsOneWidget);
+
+      await _drainPendingTimers(tester);
+    });
+
+    testWidgets('Share with household opens the paywall for free users', (
+      tester,
+    ) async {
+      await insertVehicle();
+      await _pumpDetail(tester);
+
+      await tester.tap(find.byIcon(Icons.more_vert));
+      await _settle(tester);
+      await tester.tap(find.text('Share with household'));
+      await _settle(tester);
+
+      expect(find.text('paywall'), findsOneWidget);
+
+      await _drainPendingTimers(tester);
+    });
+
+    testWidgets('Share with household explains the account to a subscriber', (
+      tester,
+    ) async {
+      // Auth is never requested on launch; this tap is the only thing that
+      // triggers it, and only after the explainer.
+      await insertVehicle();
+      await _pumpDetail(tester, premium: true);
+
+      await tester.tap(find.byIcon(Icons.more_vert));
+      await _settle(tester);
+      await tester.tap(find.text('Share with household'));
+      await _settle(tester);
+
+      expect(find.text('paywall'), findsNothing);
+      expect(find.text('Share your garage'), findsOneWidget);
+      expect(find.textContaining('uploaded'), findsOneWidget);
+
+      await _drainPendingTimers(tester);
+    });
+
+    testWidgets('a signed-in subscriber skips the explainer', (tester) async {
+      final auth = FakeAuthBackend();
+      await auth.signInWithAppleIdToken(idToken: 't', rawNonce: 'n');
+      await insertVehicle();
+      await _pumpDetail(tester, premium: true, auth: auth);
+
+      await tester.tap(find.byIcon(Icons.more_vert));
+      await _settle(tester);
+      await tester.tap(find.text('Share with household'));
+      await _settle(tester);
+
+      expect(find.text('Share your garage'), findsNothing);
+      expect(auth.appleCallCount, 0, reason: 'no second sign-in');
 
       await _drainPendingTimers(tester);
     });

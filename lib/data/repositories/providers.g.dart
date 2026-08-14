@@ -151,3 +151,54 @@ final class ReminderRuleRepositoryProvider
 
 String _$reminderRuleRepositoryHash() =>
     r'eecb488d7c21a3f6cba9a21b9b9bd2b7e08eda99';
+
+@ProviderFor(householdEntitlementRepository)
+final householdEntitlementRepositoryProvider =
+    HouseholdEntitlementRepositoryProvider._();
+
+final class HouseholdEntitlementRepositoryProvider
+    extends
+        $FunctionalProvider<
+          HouseholdEntitlementRepository,
+          HouseholdEntitlementRepository,
+          HouseholdEntitlementRepository
+        >
+    with $Provider<HouseholdEntitlementRepository> {
+  HouseholdEntitlementRepositoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'householdEntitlementRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$householdEntitlementRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<HouseholdEntitlementRepository> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  HouseholdEntitlementRepository create(Ref ref) {
+    return householdEntitlementRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(HouseholdEntitlementRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<HouseholdEntitlementRepository>(
+        value,
+      ),
+    );
+  }
+}
+
+String _$householdEntitlementRepositoryHash() =>
+    r'46f482b830fc44e23c57cdb8f8b158d7c0715a77';

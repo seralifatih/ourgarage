@@ -7,6 +7,7 @@ import 'package:ourgarage/data/local/database.dart';
 import 'package:ourgarage/data/repositories/database_holder.dart';
 
 import 'support/fake_notification_plugin.dart';
+import 'support/fake_purchases_api.dart';
 
 void main() {
   late AppDatabase db;
@@ -26,7 +27,10 @@ void main() {
   ) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [fakeNotificationServiceOverride()],
+        overrides: [
+          fakeNotificationServiceOverride(),
+          fakePurchaseServiceOverride(),
+        ],
         child: const OurGarageApp(),
       ),
     );

@@ -4,15 +4,19 @@ import 'package:go_router/go_router.dart';
 
 import '../../app_routes.dart';
 import '../../data/local/database.dart';
+import '../../data/repositories/premium_status_provider.dart';
 import '../../data/repositories/providers.dart';
 import '../../data/repositories/stream_providers.dart';
+import '../../services/auth_service_provider.dart';
+import '../household/widgets/household_account_sheet.dart';
+import '../household/widgets/household_migration_dialog.dart';
 import 'vehicle_detail_providers.dart';
 import 'widgets/odometer_update_sheet.dart';
 import 'widgets/service_history_section.dart';
 import 'widgets/vehicle_detail_header.dart';
 import 'widgets/vehicle_reminders_section.dart';
 
-enum _VehicleMenuAction { edit, delete }
+enum _VehicleMenuAction { edit, share, delete }
 
 /// Everything known about one vehicle: current odometer, reminders, history.
 class VehicleDetailScreen extends ConsumerWidget {
@@ -71,6 +75,10 @@ class _VehicleDetailView extends ConsumerWidget {
               PopupMenuItem(
                 value: _VehicleMenuAction.edit,
                 child: Text('Edit vehicle'),
+              ),
+              PopupMenuItem(
+                value: _VehicleMenuAction.share,
+                child: Text('Share with household'),
               ),
               PopupMenuItem(
                 value: _VehicleMenuAction.delete,
@@ -132,9 +140,52 @@ class _VehicleDetailView extends ConsumerWidget {
     switch (action) {
       case _VehicleMenuAction.edit:
         context.push(AppRoutes.editVehicle(vehicle.id));
+      case _VehicleMenuAction.share:
+        await _shareWithHousehold(context, ref);
       case _VehicleMenuAction.delete:
         await _confirmDelete(context, ref);
     }
+  }
+
+  /// Household sharing is a premium feature, and the only trigger for auth.
+  ///
+  /// The order matters: paywall first, then account. Asking someone to sign in
+  /// and then telling them it costs money would waste the sign-in entirely;
+  /// this way an account is only ever requested from someone who has already
+  /// decided to share.
+  ///
+  /// A user who is already signed in skips the sheet — it exists to explain a
+  /// surprising request, and there is nothing surprising left once they have
+  /// an account.
+  Future<void> _shareWithHousehold(BuildContext context, WidgetRef ref) async {
+    if (!ref.read(premiumStatusProvider)) {
+      context.push(AppRoutes.paywall);
+      return;
+    }
+
+    final auth = ref.read(authServiceProvider);
+    final messenger = ScaffoldMessenger.of(context);
+
+    final signIn = await auth.signInIfNeeded(
+      () => HouseholdAccountSheet.show(context),
+    );
+    // Dismissed, or sign-in failed and was reported inside the sheet.
+    if (signIn == null || !context.mounted) return;
+
+    // The garage has to be in the cloud before anyone can be invited to see
+    // it, so this runs behind a blocking dialog rather than in the background.
+    final uploaded = await HouseholdMigrationDialog.run(
+      context,
+      householdId: signIn.householdId,
+      userId: signIn.userId,
+    );
+    if (!uploaded || !context.mounted) return;
+
+    // Signed in, household created, garage uploaded. Issuing an invite code
+    // against `accept_household_invite()` is the next slice of this feature.
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(const SnackBar(content: Text('Invites are coming soon')));
   }
 
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {

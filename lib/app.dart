@@ -8,8 +8,10 @@ import 'app_routes.dart';
 import 'core/constants.dart';
 import 'core/theme.dart';
 import 'features/reminders/odometer_nudge_provider.dart';
+import 'data/sync/sync_providers.dart';
 import 'features/reminders/reminder_notification_scheduler.dart';
 import 'services/notification_service.dart';
+import 'services/auth_service_provider.dart';
 import 'services/notification_service_provider.dart';
 
 class OurGarageApp extends ConsumerStatefulWidget {
@@ -43,7 +45,22 @@ class _OurGarageAppState extends ConsumerState<OurGarageApp>
     // without telling us, so every resume rebuilds the whole schedule.
     if (state == AppLifecycleState.resumed) {
       unawaited(_rescheduleAll());
+      unawaited(_syncIfSharing());
     }
+  }
+
+  /// Pushes anything queued and pulls what the household changed.
+  ///
+  /// Deliberately unawaited and failure-tolerant: this is a background
+  /// reconciliation, and nothing the user can see waits on it. Skipped
+  /// entirely for the local-only user, who has no household to sync with.
+  Future<void> _syncIfSharing() async {
+    final householdId = await ref
+        .read(authServiceProvider)
+        .currentHouseholdId();
+    if (householdId == null) return;
+
+    await ref.read(syncServiceProvider).sync(householdId: householdId);
   }
 
   Future<void> _startNotifications() async {
