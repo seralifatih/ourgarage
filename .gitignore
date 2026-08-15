@@ -43,3 +43,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Local build-time secrets (Supabase URL/anon key, RevenueCat key) for
+# --dart-define-from-file. Never commit real project credentials.
+dart_defines.json
