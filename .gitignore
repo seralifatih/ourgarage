@@ -47,3 +47,7 @@ app.*.map.json
 # Local build-time secrets (Supabase URL/anon key, RevenueCat key) for
 # --dart-define-from-file. Never commit real project credentials.
 dart_defines.json
+
+# Local Supabase CLI state (project link, cached versions) from
+# `supabase link`/`supabase functions deploy`. Machine-specific, not shared.
+supabase/.temp/

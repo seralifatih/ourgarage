@@ -1,0 +1,69 @@
+{
+  "identifier" : "F5E8B6A0-0000-4000-8000-000000000001",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "9.99",
+      "familyShareable" : false,
+      "internalID" : "F5E8B6A0-0000-4000-8000-000000000002",
+      "localizations" : [
+        {
+          "description" : "Unlock unlimited vehicles and household sharing.",
+          "displayName" : "OurGarage Lifetime",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "ourgarage_lifetime",
+      "referenceName" : "OurGarage lifetime",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "F5E8B6A0-0000-4000-8000-000000000003",
+      "localizations" : [
+
+      ],
+      "name" : "OurGarage Premium",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "4.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "F5E8B6A0-0000-4000-8000-000000000004",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Unlock unlimited vehicles and household sharing.",
+              "displayName" : "Our Garage Premium",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "ourgarage_annual",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "OurGarage annual",
+          "subscriptionGroupID" : "F5E8B6A0-0000-4000-8000-000000000003",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}
