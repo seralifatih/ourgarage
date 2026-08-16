@@ -57,6 +57,18 @@ definitions:
       # rebuild and a stale cache there produces confusing analyzer errors.
 
   scripts:
+    - &disable_spm
+      name: Disable Swift Package Manager
+      script: flutter config --no-enable-swift-package-manager
+      # Flutter 3.44+ defaults to Swift Package Manager for iOS plugins. This
+      # project's ios/Podfile is still CocoaPods-based, and with SPM on,
+      # `flutter build` treats every plugin as an SPM package and skips adding
+      # it to the Podfile — `pod install` then only ever resolves `Flutter`
+      # itself, and the build fails later with a missing-module error for
+      # every real plugin (app_links, purchases_flutter, etc.). Forcing
+      # CocoaPods keeps plugin resolution on the one path the Podfile and
+      # Xcode project actually agree on.
+
     - &pub_get
       name: Flutter pub get
       script: flutter pub get
@@ -146,6 +158,7 @@ workflows:
     cache: *cache
 
     scripts:
+      - *disable_spm
       - *pub_get
       - *codegen
       - *analyze
@@ -215,6 +228,7 @@ workflows:
     cache: *cache
 
     scripts:
+      - *disable_spm
       - *pub_get
       - *codegen
 
