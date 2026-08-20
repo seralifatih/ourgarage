@@ -1,6 +1,6 @@
 # OurGarage — App Store Submission Checklist
 
-Not: TestFlight/gerçek cihaz testi hâlâ eksik (iPhone bekleniyor). Bu checklist cihaz gerektirmeyen her şeyi kapsıyor; en alt bölümde iPhone gelince yapılacaklar ayrı listelendi.
+Not: İlk gerçek build Codemagic üzerinden başarıyla TestFlight'a yüklendi (bkz. bölüm 6 ve "Telefon/tablet gelince" bölümü). Test cihazı olarak elde bulunan iPad mini 4 (A1538), donanımsal olarak iOS 15.8.x'te kilitli — Xcode 26 ile derlenen build'ler bu cihazda TestFlight tarafından "iOS 16 gerekli" denilerek reddediliyor (Apple'ın Xcode 26 SDK zorunluluğuyla gelen, projeden bağımsız bir platform kısıtlaması). Fonksiyonel doğrulama şimdilik MacinCloud'daki iOS Simulator üzerinden yapılıyor; gerçek cihaz testi iOS 16+ çalıştırabilen bir cihaz bulununca tamamlanacak.
 
 Proje bilgileri (referans):
 - Bundle ID: `com.ourgarage.ourgarage`
@@ -130,7 +130,7 @@ family sharing.
 
 ## 5. Privacy / Legal
 
-Not: [lib/services/auth_service.dart](lib/services/auth_service.dart) ve household paylaşım ekranı üzerinden kod tarafında **Sign in with Apple** kullanıldığı doğrulandı — App Privacy formunda bunu işaretlemen doğru olur.
+Not: [lib/services/auth_service.dart](lib/services/auth_service.dart) ve household paylaşım ekranı üzerinden kod tarafında **Sign in with Apple** kullanıldığı doğrulandı — App Privacy formunda bunu işaretlemen doğru olur. Supabase Auth → Providers → Apple entegrasyonu da tamamlandı (Client ID: `com.ourgarage.ourgarage`, native id-token akışı); Apple Developer'da App ID üzerinde Sign in with Apple capability'si açık.
 
 - [ ] Privacy Policy URL (Supabase + RevenueCat kullanıldığı için: hangi veri toplanıyor — email/Sign in with Apple bilgisi, household üyelik verisi, satın alma durumu — bunları açıkça yaz). Bu bir web sayfası olmalı (basit bir statik sayfa yeterli, App Store Connect kendi barındırmıyor).
 - [ ] Support URL (basit bir sayfa/e-posta yeterli)
@@ -167,7 +167,7 @@ Not: [lib/services/auth_service.dart](lib/services/auth_service.dart) ve househo
 2. Tek seferlik "lifetime unlock" ürünü için:
    - **In-App Purchases** → **+** → **Non-Consumable** seç.
    - **Reference Name**: `Lifetime Unlock` (iç kullanım, kullanıcı görmez).
-   - **Product ID**: RevenueCat'te kullanacağın ID ile aynı olmalı, ör. `ourgarage_lifetime_unlock`.
+   - **Product ID**: kod tarafındaki `AppConstants.lifetimeProductId` ile birebir aynı olmalı — gerçekte kullanılan: `ourgarage_lifetime`.
    - **Price**: **Price Schedule** üzerinden $9.99'a en yakın fiyat tier'ını seç.
    - **Display Name** / **Description**: kullanıcıya App Store'da görünecek başlık/açıklama (ör. "Lifetime Unlock" / "Unlock unlimited vehicles and family sharing, forever.").
    - Bir **screenshot** yüklemen istenir (satın alma ekranının görseli, App Review için) — uygulamanın paywall ekranından bir screenshot yeterli.
@@ -177,7 +177,7 @@ Not: [lib/services/auth_service.dart](lib/services/auth_service.dart) ve househo
    - Grup içinde **+** → yeni subscription: **Reference Name**: `Annual Plan`, **Product ID**: ör. `ourgarage_annual`, **Duration**: `1 Year`, **Price**: $4.99 tier.
    - Aynı şekilde Display Name/Description/screenshot doldur → **Save**.
 
-- [ ] App Store Connect'te In-App Purchase ürünleri tanımla: $9.99 tek seferlik lifetime unlock + $4.99/yıl opsiyonel
+- [x] App Store Connect'te In-App Purchase ürünleri tanımlandı: `ourgarage_lifetime` (Non-Consumable, $9.99) + `ourgarage_annual` (Auto-Renewable Subscription, $4.99/yıl). Her ikisi için Review Information ekran görüntüsü de yüklendi, ikisi de "Ready to Submit" durumunda — **ama bu, Submit for Review'a basılmış olmakla aynı şey değil**, aşağıdaki bulgu bunu netleştirdi.
 
 **BULGU (2026-08-20, Mac'te simülatörde `flutter run` ile test edildi):** Paywall ekranı "Purchases are unavailable right now" hatası veriyor. RevenueCat SDK log'u:
 ```
@@ -197,11 +197,11 @@ En olası neden: bu checklist'teki "Submit for Review" adımı IAP ürünleri i�
 
 **RevenueCat eşleştirmesi:**
 1. [app.revenuecat.com](https://app.revenuecat.com) → ilgili proje → sol menü **Products**.
-2. **+ New** → App Store Connect'te oluşturduğun `Product ID`'yi birebir aynı şekilde gir (ör. `ourgarage_lifetime_unlock`).
+2. **+ New** → App Store Connect'te oluşturduğun `Product ID`'yi birebir aynı şekilde gir (`ourgarage_lifetime`, `ourgarage_annual`).
 3. **Entitlements** sekmesinde bu ürünü ilgili entitlement'a bağla (uygulama kodundaki `purchases_flutter` entegrasyonunun kontrol ettiği entitlement ID ile eşleşmeli — kod tarafında hangi entitlement kullanıldığını sen biliyorsun, RevenueCat dashboard'daki isimle birebir aynı olmalı).
 4. **Offerings** sekmesinde bu ürünleri bir offering/paywall'a ekle (varsayılan offering'e ekli değilse paywall'da görünmez).
 
-- [ ] RevenueCat dashboard'da bu ürünleri App Store Connect ürünleriyle eşleştir
+- [x] RevenueCat dashboard'da ürünler App Store Connect ürünleriyle eşleştirildi: `premium` entitlement'ı oluşturuldu, her iki ürün de ona bağlandı; `sale` adında bir offering oluşturuldu (tek offering olduğu için otomatik "Current"), içine `Lifetime`/`Annual` paketleri eklendi. RevenueCat public SDK key (`appl_...`) `dart_defines.json` ve Codemagic `revenuecat` env grubuna girildi.
 
 **Sandbox test hesabı:**
 1. App Store Connect → sağ üstteki hesap/organizasyon menüsünden (veya sol alt) **Users and Access** → üstteki sekmelerden **Sandbox Testers**.
@@ -213,9 +213,9 @@ En olası neden: bu checklist'teki "Submit for Review" adımı IAP ürünleri i�
 
 ---
 
-## Telefon gelince yapılacaklar (bu checklist'in dışında, ayrı)
+## Telefon/tablet gelince yapılacaklar (bu checklist'in dışında, ayrı)
 
-- [ ] Codemagic build → TestFlight'a yükle
-- [ ] Kendi cihazında: free tek-araç akışı, reminder bildirimleri, household davet/paylaşım akışı, sandbox satın alma testi
+- [x] Codemagic build → TestFlight'a yükle. İlk denemelerde iki ayrı engel çıktı ve ikisi de düzeltildi: (1) proje `codemagic.yaml` yerine Codemagic'in görsel "Workflow Editor"ını kullanıyordu — "Switch to yaml configuration" ile gerçek `ios-release` workflow'una geçildi; (2) Flutter 3.44+'ın varsayılan Swift Package Manager entegrasyonu, CocoaPods tabanlı `ios/Podfile` ile çakışıp gerçek plugin'lerin (`app_links`, `purchases_flutter` vb.) hiç kurulmamasına yol açıyordu — `flutter config --no-enable-swift-package-manager` build script'ine eklendi ve doğru şekilde çözümlenmiş `ios/Podfile.lock` repoya commit edildi. Ayrıca imzalama (App Store Connect API key rolü Admin olmalı) ve `APP_STORE_APPLE_ID`/env grupları da bu süreçte kuruldu. Build başarıyla derlendi, imzalandı ve TestFlight'a yüklendi, App Store Connect işlemesini tamamladı.
+- [ ] Kendi cihazında: free tek-araç akışı, reminder bildirimleri, household davet/paylaşım akışı, sandbox satın alma testi — **bloklandı**: elde bulunan iPad mini 4 (A1538) donanımsal olarak iOS 15.8.x'te kilitli, Xcode 26 ile derlenen build'leri TestFlight "iOS 16 gerekli" diyerek reddediyor (bilinen, Apple tarafında henüz resmi çözümü olmayan bir Xcode 26 kısıtlaması — bkz. üstteki not). iOS 16+ çalıştırabilen bir cihaz bulununca bu adım tamamlanacak; şimdilik fonksiyonel akış MacinCloud'daki iOS Simulator üzerinden doğrulanıyor.
 - [ ] Bulunan buglar için düzeltme
 - [ ] Submission'ı gönder (bu checklist'teki her şey hazırsa sadece "Submit for Review" kalır)
