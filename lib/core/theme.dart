@@ -29,7 +29,7 @@ class AppTextStyles {
 class AppTheme {
   AppTheme._();
 
-  static const Color _seedColor = Color(0xFF3A5A6B);
+  static const Color _seedColor = Color(0xFF0F9C8E);
 
   static ThemeData light = ThemeData(
     useMaterial3: true,

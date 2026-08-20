@@ -106,6 +106,7 @@ class _OurGarageAppState extends ConsumerState<OurGarageApp>
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: AppConstants.appName,
+      debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       routerConfig: appRouter,
