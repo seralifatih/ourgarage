@@ -179,6 +179,22 @@ Not: [lib/services/auth_service.dart](lib/services/auth_service.dart) ve househo
 
 - [ ] App Store Connect'te In-App Purchase ürünleri tanımla: $9.99 tek seferlik lifetime unlock + $4.99/yıl opsiyonel
 
+**BULGU (2026-08-20, Mac'te simülatörde `flutter run` ile test edildi):** Paywall ekranı "Purchases are unavailable right now" hatası veriyor. RevenueCat SDK log'u:
+```
+getOfferings failed: CONFIGURATION_ERROR (code 23)
+"None of the products registered in the RevenueCat dashboard could be fetched from App Store Connect
+(or the StoreKit Configuration file if one is being used)."
+More info: https://rev.cat/why-are-offerings-empty
+```
+Kod tarafı doğru — `lib/core/constants.dart` içindeki product ID'ler (`ourgarage_lifetime`, `ourgarage_annual`) ve entitlement (`premium`) RevenueCat dashboard'daki isimlerle eşleşiyor, bu kaynaklı değil. `.storekit` local config de bu testte devrede değildi (`flutter run` Xcode Run action'ı kullanmıyor, gerçek App Store Connect'e gitti).
+
+En olası neden: bu checklist'teki "Submit for Review" adımı IAP ürünleri için henüz yapılmamış olabilir — Apple, yeni bir app'in ilk IAP ürünlerini StoreKit'in gerçek cihaz/simülatörde servis edebilmesi için genelde ilk build ile birlikte (veya sonrasında) review'a gönderilmiş olmasını istiyor; aksi halde metadata (fiyat vb.) hiç dönmüyor.
+
+- [ ] App Store Connect → Monetization → In-App Purchases: her iki ürünün durumunu kontrol et, "Ready to Submit" veya sonrası bir durumda değilse tamamla ve **Submit for Review**'a bas
+- [ ] Agreements, Tax, and Banking → Paid Apps sözleşmesinin imzalı/aktif olduğunu doğrula (imzalı değilse IAP hiç fetch edilemez)
+- [ ] RevenueCat dashboard'daki App Store Connect app bağlantısının bundle ID'sinin (`com.ourgarage.ourgarage`) doğru olduğunu doğrula
+- [ ] Yukarıdakiler düzeltildikten sonra simülatörde tekrar test et: `flutter run --dart-define-from-file=dart_defines.json -d "iPhone 16 Pro"` → paywall'a git → gerçek fiyatlar ($9.99 / $4.99) görünmeli
+
 **RevenueCat eşleştirmesi:**
 1. [app.revenuecat.com](https://app.revenuecat.com) → ilgili proje → sol menü **Products**.
 2. **+ New** → App Store Connect'te oluşturduğun `Product ID`'yi birebir aynı şekilde gir (ör. `ourgarage_lifetime_unlock`).
