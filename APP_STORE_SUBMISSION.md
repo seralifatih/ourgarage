@@ -53,9 +53,9 @@ Marketing metni/overlay eklemek istersen (ör. "Şimdi tüm aile" gibi) Figma'da
    - **User Access**: `Full Access` (varsayılan bırakılabilir).
 4. **Create** butonuna tıkla.
 
-- [ ] SKU belirle: `ourgarage-ios-2026` (yalnızca App Store Connect içinde kullanılan, kullanıcıya görünmeyen bir iç kod — yukarıdaki formda giriliyor, ayrı bir yerde tekrar ayarlamana gerek yok)
-- [ ] Primary language: English (US) — hedef pazar EN (yukarıdaki formda ayarlandı)
-- [ ] Kategori: App oluşturduktan sonra sol menüden **App Information** sayfasına git → **Category** bölümünde **Primary**: `Utilities`, **Secondary** (opsiyonel): `Lifestyle` seç → sağ üstten **Save**.
+- [x] SKU belirle: `ourgarage-ios-2026` (yalnızca App Store Connect içinde kullanılan, kullanıcıya görünmeyen bir iç kod — yukarıdaki formda giriliyor, ayrı bir yerde tekrar ayarlamana gerek yok)
+- [x] Primary language: English (US) — hedef pazar EN (yukarıdaki formda ayarlandı)
+- [x] Kategori: App oluşturduktan sonra sol menüden **App Information** sayfasına git → **Category** bölümünde **Primary**: `Utilities`, **Secondary** (opsiyonel): `Lifestyle` seç → sağ üstten **Save**.
 
 ---
 
@@ -68,6 +68,9 @@ Bu metinler App Store Connect'te: sol menü → **App Store** sekmesi altında i
 
 **Subtitle (30 karakter):**
 `Family Car Care & Reminders` — "family" kelimesi farklılaştırmayı ilk satırda taşıyor.
+
+**Promotional Text (170 karakter, opsiyonel ama önerilir — App Description'ın üstünde görünür, build submit edilmeden değiştirilebilir):**
+`Track every vehicle your family drives in one shared garage. Get reminders before service is due, and share the history with your whole household.`
 
 **Keywords (100 karakter, virgülle ayrılmış, boşluk yok):**
 ASO actor datasındaki opportunity skoru yüksek terimleri buraya koy — elimde tam liste yok, actor çıktısını kontrol edip şunun etrafında şekillendir:
@@ -105,7 +108,7 @@ family sharing.
 
 **Giriş adımları:**
 1. Sol menüden version'a tıkla (ör. `1.0 Prepare for Submission`).
-2. **Promotional Text** (opsiyonel, atlanabilir), **Description**, **Keywords**, **What's New** alanlarını yukarıdaki metinlerle doldur.
+2. **Promotional Text**, **Description**, **Keywords**, **What's New** alanlarını yukarıdaki metinlerle doldur.
 3. **App Name** ve **Subtitle** alanları aynı sayfanın üst kısmında (bazı hesaplarda **App Information** sayfasında) — orada doldur.
 4. Sağ üstten **Save**.
 
