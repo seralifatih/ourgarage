@@ -33,10 +33,14 @@ class AppConstants {
   static const String lifetimeProductId = 'ourgarage_lifetime';
   static const String annualProductId = 'ourgarage_annual';
 
-  // Source text lives in `store/legal/`. These must be live and reachable
-  // before submission — review rejects an IAP paywall whose legal links 404.
-  static const String termsUrl = 'https://noktastudio.dev/ourgarage/terms';
-  static const String privacyUrl = 'https://noktastudio.dev/ourgarage/privacy';
+  // Source text lives in `store/legal/`, published from `docs/` via GitHub
+  // Pages. These must be live and reachable before submission — review
+  // rejects an IAP paywall whose legal links 404. Point these at
+  // noktastudio.dev instead once that domain is actually hosting the pages.
+  static const String termsUrl =
+      'https://seralifatih.github.io/ourgarage/ourgarage/terms/';
+  static const String privacyUrl =
+      'https://seralifatih.github.io/ourgarage/ourgarage/privacy/';
 
   /// Supabase project URL and anon key, supplied at build time:
   /// `flutter run --dart-define=SUPABASE_URL=https://xxx.supabase.co \

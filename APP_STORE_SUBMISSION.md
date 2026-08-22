@@ -112,7 +112,7 @@ family sharing.
 3. **App Name** ve **Subtitle** alanları aynı sayfanın üst kısmında (bazı hesaplarda **App Information** sayfasında) — orada doldur.
 4. Sağ üstten **Save**.
 
-- [ ] Yukarıdaki metinleri ilgili alanlara gir
+- [x] Yukarıdaki metinleri ilgili alanlara gir
 
 ---
 
@@ -193,9 +193,9 @@ Kod tarafı doğru — `lib/core/constants.dart` içindeki product ID'ler (`ourg
 
 En olası neden: bu checklist'teki "Submit for Review" adımı IAP ürünleri için henüz yapılmamış olabilir — Apple, yeni bir app'in ilk IAP ürünlerini StoreKit'in gerçek cihaz/simülatörde servis edebilmesi için genelde ilk build ile birlikte (veya sonrasında) review'a gönderilmiş olmasını istiyor; aksi halde metadata (fiyat vb.) hiç dönmüyor.
 
-- [ ] App Store Connect → Monetization → In-App Purchases: her iki ürünün durumunu kontrol et, "Ready to Submit" veya sonrası bir durumda değilse tamamla ve **Submit for Review**'a bas
+- [x] App Store Connect → Monetization → In-App Purchases: her iki ürünün durumunu kontrol et, "Ready to Submit" veya sonrası bir durumda değilse tamamla ve **Submit for Review**'a bas
 - [ ] Agreements, Tax, and Banking → Paid Apps sözleşmesinin imzalı/aktif olduğunu doğrula (imzalı değilse IAP hiç fetch edilemez)
-- [ ] RevenueCat dashboard'daki App Store Connect app bağlantısının bundle ID'sinin (`com.ourgarage.ourgarage`) doğru olduğunu doğrula
+- [x] RevenueCat dashboard'daki App Store Connect app bağlantısının bundle ID'sinin (`com.ourgarage.ourgarage`) doğru olduğunu doğrula
 - [ ] Yukarıdakiler düzeltildikten sonra simülatörde tekrar test et: `flutter run --dart-define-from-file=dart_defines.json -d "iPhone 16 Pro"` → paywall'a git → gerçek fiyatlar ($9.99 / $4.99) görünmeli
 
 **RevenueCat eşleştirmesi:**
