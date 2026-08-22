@@ -51,3 +51,7 @@ dart_defines.json
 # Local Supabase CLI state (project link, cached versions) from
 # `supabase link`/`supabase functions deploy`. Machine-specific, not shared.
 supabase/.temp/
+
+# Claude Code's own per-session lock file (process id, session timestamp).
+# Changes on every session/machine; never meant to be shared or committed.
+.claude/scheduled_tasks.lock

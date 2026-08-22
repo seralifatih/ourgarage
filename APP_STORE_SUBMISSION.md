@@ -135,8 +135,8 @@ family sharing.
 
 Not: [lib/services/auth_service.dart](lib/services/auth_service.dart) ve household paylaşım ekranı üzerinden kod tarafında **Sign in with Apple** kullanıldığı doğrulandı — App Privacy formunda bunu işaretlemen doğru olur. Supabase Auth → Providers → Apple entegrasyonu da tamamlandı (Client ID: `com.ourgarage.ourgarage`, native id-token akışı); Apple Developer'da App ID üzerinde Sign in with Apple capability'si açık.
 
-- [ ] Privacy Policy URL (Supabase + RevenueCat kullanıldığı için: hangi veri toplanıyor — email/Sign in with Apple bilgisi, household üyelik verisi, satın alma durumu — bunları açıkça yaz). Bu bir web sayfası olmalı (basit bir statik sayfa yeterli, App Store Connect kendi barındırmıyor).
-- [ ] Support URL (basit bir sayfa/e-posta yeterli)
+- [x] Privacy Policy URL (Supabase + RevenueCat kullanıldığı için: hangi veri toplanıyor — email/Sign in with Apple bilgisi, household üyelik verisi, satın alma durumu — bunları açıkça yaz). Bu bir web sayfası olmalı (basit bir statik sayfa yeterli, App Store Connect kendi barındırmıyor).
+- [x] Support URL (basit bir sayfa/e-posta yeterli)
 
 **App Privacy (Nutrition Label) formu — adım adım:**
 1. Sol menüden **App Privacy** sekmesine tıkla.
@@ -194,7 +194,7 @@ Kod tarafı doğru — `lib/core/constants.dart` içindeki product ID'ler (`ourg
 En olası neden: bu checklist'teki "Submit for Review" adımı IAP ürünleri için henüz yapılmamış olabilir — Apple, yeni bir app'in ilk IAP ürünlerini StoreKit'in gerçek cihaz/simülatörde servis edebilmesi için genelde ilk build ile birlikte (veya sonrasında) review'a gönderilmiş olmasını istiyor; aksi halde metadata (fiyat vb.) hiç dönmüyor.
 
 - [x] App Store Connect → Monetization → In-App Purchases: her iki ürünün durumunu kontrol et, "Ready to Submit" veya sonrası bir durumda değilse tamamla ve **Submit for Review**'a bas
-- [ ] Agreements, Tax, and Banking → Paid Apps sözleşmesinin imzalı/aktif olduğunu doğrula (imzalı değilse IAP hiç fetch edilemez)
+- [x] Agreements, Tax, and Banking → Paid Apps sözleşmesinin imzalı/aktif olduğunu doğrula (imzalı değilse IAP hiç fetch edilemez)
 - [x] RevenueCat dashboard'daki App Store Connect app bağlantısının bundle ID'sinin (`com.ourgarage.ourgarage`) doğru olduğunu doğrula
 - [ ] Yukarıdakiler düzeltildikten sonra simülatörde tekrar test et: `flutter run --dart-define-from-file=dart_defines.json -d "iPhone 16 Pro"` → paywall'a git → gerçek fiyatlar ($9.99 / $4.99) görünmeli
 
