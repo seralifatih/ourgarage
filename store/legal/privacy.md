@@ -14,7 +14,7 @@ the moment you tap "Share with household."
 
 ## Who we are
 
-OurGarage is made by Nokta Studio. Contact: **privacy@noktastudio.dev**
+OurGarage is made by Nokta Studio. Contact: **noktadevstudio@gmail.com**
 
 ## What we collect, and only when
 
@@ -106,7 +106,7 @@ and are contractually restricted from using it for their own purposes.
 
 **OurGarage does not currently have an in-app account-deletion or data-export
 feature.** If you want your account and the personal data associated with it
-deleted, email **privacy@noktastudio.dev** from the address associated with
+deleted, email **noktadevstudio@gmail.com** from the address associated with
 your account and we will delete it by hand. We reply to deletion requests
 within 30 days, and typically much sooner. This is a gap we intend to close
 with an in-app deletion flow in a future release; until then, email is the
@@ -126,7 +126,7 @@ deleted along with your account.
 ## Your rights
 
 Whether or not you are covered by a specific privacy law, you can email
-**privacy@noktastudio.dev** at any time to:
+**noktadevstudio@gmail.com** at any time to:
 
 - ask what personal data we hold about you,
 - get a copy of it,
@@ -159,4 +159,4 @@ data without updating this policy first.
 
 ## Contact
 
-**privacy@noktastudio.dev**
+**noktadevstudio@gmail.com**

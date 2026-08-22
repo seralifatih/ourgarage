@@ -72,7 +72,7 @@ App Store on your device. We have no ability to issue a refund directly,
 override Apple's decision on a refund request, or access your payment
 information to do so. If you believe you were charged in error or that a
 feature you paid for is not working, contact us at
-**support@noktastudio.dev** first — we would rather resolve the underlying
+**noktadevstudio@gmail.com** first — we would rather resolve the underlying
 problem than have you go through a refund process.
 
 ### Price changes
@@ -181,7 +181,7 @@ You may stop using OurGarage at any time by deleting the app from your device.
 
 **OurGarage does not currently have an in-app account-deletion flow.** If you
 have created an account and want it and your associated data deleted, email
-**privacy@noktastudio.dev**; see the Privacy Policy for details on how that
+**noktadevstudio@gmail.com**; see the Privacy Policy for details on how that
 process works and what happens to shared household data when you do.
 
 We may suspend or terminate your access to household-sharing features for a
@@ -203,4 +203,4 @@ cannot be waived by agreement.
 
 ## 12. Contact
 
-**support@noktastudio.dev**
+**noktadevstudio@gmail.com**
