@@ -34,7 +34,7 @@ Xcode Simulator → Device menüsünden ilgili cihazı seç → uygulamayı çal
 
 Marketing metni/overlay eklemek istersen (ör. "Şimdi tüm aile" gibi) Figma'da veya basit bir Canva şablonuyla üstüne bindirebilirsin — zorunlu değil ama dönüşümü artırır.
 
-- [ ] Screenshot'ları çek (cihaz/simülatör gerekiyor — sende)
+- [x] Screenshot'ları çek (cihaz/simülatör gerekiyor — sende)
 
 ---
 
@@ -101,7 +101,21 @@ Mileage- or date-based reminders that actually fit how you drive.
 
 Free to start with one vehicle. Upgrade for unlimited vehicles and
 family sharing.
+
+OURGARAGE PREMIUM
+- Lifetime — $9.99 one-time purchase, unlocks unlimited vehicles and
+  household sharing forever.
+- Annual — $4.99/year, auto-renewing subscription with the same features.
+  Payment is charged to your Apple ID at confirmation. Subscriptions
+  automatically renew unless auto-renew is turned off at least 24 hours
+  before the end of the current period. Manage or cancel anytime in
+  Settings > [your name] > Subscriptions.
+
+Terms of Use (EULA): https://seralifatih.github.io/ourgarage/ourgarage/terms/
+Privacy Policy: https://seralifatih.github.io/ourgarage/ourgarage/privacy/
 ```
+
+**Guideline 3.1.2(c) reddi buradan geliyordu — düzeltildi:** Apple, uygulama içindeki Terms/Privacy linklerini yeterli görmüyor, App Store **metadata**'sında (Description veya EULA alanı) da fonksiyonel bir link istiyor. Yukarıdaki "OURGARAGE PREMIUM" bloğu + linkler artık Description'ın sonunda — Description alanını güncellerken bunu da ekle.
 
 **What's New (ilk sürüm için):**
 `Welcome to OurGarage — track and share your family's vehicle maintenance in one place.`
@@ -143,12 +157,15 @@ Not: [lib/services/auth_service.dart](lib/services/auth_service.dart) ve househo
 2. **Get Started** (ilk kez dolduruyorsan).
 3. "Do you collect data from this app?" → **Yes**.
 4. Veri kategorilerini tek tek işaretle:
-   - **Contact Info** → **Email Address**: kullanım amacı olarak `App Functionality` ve `Account Creation` seç, "Linked to user" işaretle (Supabase auth email'e bağlı çalışıyor).
-   - **Identifiers** → **User ID**: Sign in with Apple/Supabase user identifier için, `App Functionality`, "Linked to user" işaretli.
-   - **Purchases** → **Purchase History**: RevenueCat üzerinden satın alma durumu takip ediliyor, kategori olarak `App Functionality`/`Analytics` (RevenueCat'in kendi analytics kullanımına göre) seç.
+   - **Contact Info** → **Email Address**: kullanım amacı olarak yalnızca `App Functionality` ve `Account Creation` seç, "Linked to user" işaretle (Supabase auth email'e bağlı çalışıyor). **`Analytics` veya `Third-Party Advertising` amaçlarını İŞARETLEME.**
+   - **Identifiers** → **User ID**: yalnızca `App Functionality`, "Linked to user" işaretli. **`Analytics`/`Third-Party Advertising` işaretleme.**
+   - **Purchases** → **Purchase History**: yalnızca `App Functionality` seç. **`Analytics` seçme** — uygulamada hiçbir analytics/ads SDK yok (`store/privacy_nutrition_label.md`'de doğrulandı), bu amacı işaretlemek App Store Connect'in "Used for Tracking = Yes" varsaymasına yol açar.
    - Household/veri paylaşımı ile ilgili ek bir "User Content" kategorisi eklemek istersen (araç/servis kayıtları), `App Functionality` amacıyla ekleyebilirsin — zorunlu değil ama şeffaflık için önerilir.
 5. Free/local-only kullanım senaryosu (hesap açmadan kullanan biri) varsa, formun altındaki açıklama kutusunda bunu ayrı belirtebilirsin: "Data collection only applies to users who create an account or make a purchase."
-6. Her kategori için **Save**, sonra sayfa sonunda **Publish**.
+6. **"Do you use this data to track the user?" sorusuna → NO.** Uygulama hiçbir veriyi reklam amacıyla üçüncü taraflarla paylaşmıyor, hiçbir data broker'a satmıyor, ATT prompt'u da yok (`NSUserTrackingUsageDescription` Info.plist'te yok). Bu soru "Yes" gelmişse, formu geri açıp düzelt — **Guideline 5.1.2(i) reddinin kaynağı tam olarak bu.**
+7. Her kategori için **Save**, sonra sayfa sonunda **Publish**.
+
+**Guideline 5.1.2(i) reddi — App Tracking Transparency:** Apple, App Privacy formunda User ID/Purchase History/Email için "tracking" amacı işaretli olduğunu, ama uygulamanın ATT izni istemediğini tespit etti. Uygulama gerçekte hiçbir kullanıcıyı takip etmiyor (analytics/ads SDK'sı yok) — çözüm ATT eklemek değil, **App Privacy formundaki yanlış cevabı düzeltmek**: yukarıdaki 4 ve 6. adımları tekrar kontrol et, her veri tipi için Analytics/Advertising amaçlarının kapalı olduğundan ve "track the user" sorusunun "No" olduğundan emin ol, sonra Resolution Center'daki mesaja bu düzeltmeyi belirterek Reply'la (Apple'ın kendi mesajındaki 3 seçenekten "app does not track" seçeneği bizim durumumuz).
 
 **Age Rating anketi:**
 1. Sol menüden **Age Rating** sekmesine git (bazı hesaplarda **App Information** içinde).
@@ -191,12 +208,25 @@ More info: https://rev.cat/why-are-offerings-empty
 ```
 Kod tarafı doğru — `lib/core/constants.dart` içindeki product ID'ler (`ourgarage_lifetime`, `ourgarage_annual`) ve entitlement (`premium`) RevenueCat dashboard'daki isimlerle eşleşiyor, bu kaynaklı değil. `.storekit` local config de bu testte devrede değildi (`flutter run` Xcode Run action'ı kullanmıyor, gerçek App Store Connect'e gitti).
 
-En olası neden: bu checklist'teki "Submit for Review" adımı IAP ürünleri için henüz yapılmamış olabilir — Apple, yeni bir app'in ilk IAP ürünlerini StoreKit'in gerçek cihaz/simülatörde servis edebilmesi için genelde ilk build ile birlikte (veya sonrasında) review'a gönderilmiş olmasını istiyor; aksi halde metadata (fiyat vb.) hiç dönmüyor.
+~~En olası neden: bu checklist'teki "Submit for Review" adımı IAP ürünleri için henüz yapılmamış olabilir...~~ **DÜZELTME (2026-09-09):** Bu varsayım yanlıştı. App Review'ın kendi mesajı açıkça şunu söylüyor: *"Apple reviews In-App Purchase products in the sandbox and the In-App Purchase products do not need prior approval to function in review."* Yani IAP'lerin önceden ayrı submit edilmiş/onaylanmış olması gerekmiyor — StoreKit sandbox'ta zaten çalışması bekleniyor.
 
 - [x] App Store Connect → Monetization → In-App Purchases: her iki ürünün durumunu kontrol et, "Ready to Submit" veya sonrası bir durumda değilse tamamla ve **Submit for Review**'a bas
-- [x] Agreements, Tax, and Banking → Paid Apps sözleşmesinin imzalı/aktif olduğunu doğrula (imzalı değilse IAP hiç fetch edilemez)
+- [x] Agreements, Tax, and Banking → Paid Apps sözleşmesinin imzalı/aktif olduğunu doğrula (imzalı değilse IAP hiç fetch edilemez) — **doğrulandı: Active/imzalı.**
 - [x] RevenueCat dashboard'daki App Store Connect app bağlantısının bundle ID'sinin (`com.ourgarage.ourgarage`) doğru olduğunu doğrula
-- [ ] Yukarıdakiler düzeltildikten sonra simülatörde tekrar test et: `flutter run --dart-define-from-file=dart_defines.json -d "iPhone 16 Pro"` → paywall'a git → gerçek fiyatlar ($9.99 / $4.99) görünmeli
+- [x] Yukarıdakiler düzeltildikten sonra simülatörde tekrar test et: `flutter run --dart-define-from-file=dart_defines.json -d "iPhone 16 Pro"` → paywall'a git → gerçek fiyatlar ($9.99 / $4.99) görünmeli
+
+**İKİNCİ SUBMISSION SONUCU (2026-09-09) — 3 ayrı red geldi, hepsi çözülebilir:**
+
+1. **Guideline 2.1(b) — Paywall'da hata mesajı (App Review'ın kendi cihazında, iPad Air 11" M3, iPadOS 26.6).** Bizim `CONFIGURATION_ERROR` bulgumuzla aynı belirti. Review ekibinin notuna göre IAP'lerin önceden onaylanmasına gerek yok — yani sorun muhtemelen StoreKit/RevenueCat senkronizasyon gecikmesiydi (Apple'ın kendi review altyapısı da bazen ilk birkaç günde metadata'yı geç çekebiliyor), ya da aşağıdaki 3.1.2(c) ve 5.1.2(i) düzeltmeleriyle birlikte yeniden submit edilince kendiliğinden düzelecek. Yeniden submit etmeden önce sandbox test hesabıyla gerçek satın alma denemesi yapmak (aşağıdaki Sandbox bölümü) bunu doğrulayacak.
+
+2. **Guideline 3.1.2(c) — Metadata'da fonksiyonel EULA linki eksik.** Uygulama içindeki Terms/Privacy linkleri (paywall'daki `_LegalLinks`) yeterli değil — Apple, App Store **Description** veya **EULA alanının kendisinde** de bir link istiyor. **Çözüldü:** yukarıdaki Description taslağına "OURGARAGE PREMIUM" bloğu ve Terms/Privacy linkleri eklendi — Description'ı App Store Connect'te güncellerken bu bloğu da dahil et.
+
+3. **Guideline 5.1.2(i) — App Tracking Transparency.** App Privacy formunda User ID/Purchase History/Email için muhtemelen `Analytics` amacı işaretliydi, bu da App Store Connect'in "Used for Tracking = Yes" varsaymasına yol açtı — ama uygulamada gerçekten hiçbir tracking/analytics/ads SDK'sı yok. **Çözüm, kodda değil App Privacy formunda:** aşağıdaki "App Privacy formu" adımlarını tekrar gözden geçir, her veri tipinde Analytics/Advertising amaçlarının KAPALI olduğundan ve "track the user" sorusunun **No** olduğundan emin ol.
+
+- [ ] Description'ı yukarıdaki güncellenmiş taslakla (OURGARAGE PREMIUM bloğu + linkler dahil) App Store Connect'e gir
+- [ ] App Privacy formunu aç, Analytics/Advertising amaçlarının hiçbir veri tipinde işaretli olmadığını doğrula, "track the user" sorusunu No yap, Publish et
+- [ ] Resolution Center'daki mesaja Reply: 3 maddeye de değinerek ne düzeltildiğini yaz, gerekiyorsa yeni bir ekran kaydı ekle
+- [ ] Yeniden submit et
 
 **RevenueCat eşleştirmesi:**
 1. [app.revenuecat.com](https://app.revenuecat.com) → ilgili proje → sol menü **Products**.
