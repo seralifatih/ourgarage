@@ -158,11 +158,23 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
             else if (lifetime == null && annual == null)
               // No products to show. The value proposition above still stands;
               // only the controls that cannot work are withheld.
-              Text(
-                'Purchases are unavailable right now. Please try again later.',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.error,
-                ),
+              // A retry rather than a dead end: the App Store sandbox can fail
+              // a first product fetch and succeed seconds later.
+              Column(
+                children: [
+                  Text(
+                    'Purchases are unavailable right now.',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.error,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton(
+                    onPressed: () => ref.invalidate(currentOfferingProvider),
+                    child: const Text('Try again'),
+                  ),
+                ],
               )
             else ...[
               // IntrinsicHeight so the two cards match height regardless of

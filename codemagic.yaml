@@ -122,6 +122,59 @@ definitions:
 
 workflows:
   # ---------------------------------------------------------------------------
+  # Check IAP: manual, diagnoses "Purchases are unavailable" / CONFIGURATION_ERROR
+  # ---------------------------------------------------------------------------
+  #
+  # Answers one question without needing a Mac or an iPhone: does the App
+  # Store sandbox actually return ourgarage_lifetime / ourgarage_annual for
+  # this RevenueCat key right now? Boots an iOS Simulator on Codemagic's
+  # mac_mini and runs integration_test/revenuecat_offerings_test.dart against
+  # it — the product-fetch network call behaves the same on a simulator as on
+  # a device; only the purchase sheet itself needs a physical device. Read the
+  # PASS/FAIL verdict in this step's build log, not the step's own pass/fail
+  # (the test always exits 0 so a store-side hiccup doesn't look like a CI
+  # failure).
+  ios-check-iap:
+    name: iOS check IAP offerings (manual, simulator)
+    <<: *instance
+
+    environment:
+      <<: *environment
+      groups: *groups
+
+    # No `triggering:` block — start by hand from the Codemagic UI whenever
+    # you want a fresh answer (e.g. right after Agreements/Tax/Banking turns
+    # Active).
+
+    cache: *cache
+
+    scripts:
+      - *disable_spm
+      - *pub_get
+      - *codegen
+      - *pod_install
+
+      - name: Boot iOS Simulator
+        script: |
+          DEVICE_ID=$(xcrun simctl list devices available --json \
+            | ruby -rjson -e 'd=JSON.parse(STDIN.read)["devices"];
+                k=d.keys.select{|k| k.include?("iOS")}.sort.last;
+                puts d[k].find{|x| x["name"].include?("iPhone")}["udid"]')
+          echo "Using simulator $DEVICE_ID"
+          echo "DEVICE_ID=$DEVICE_ID" >> $CM_ENV
+          xcrun simctl boot "$DEVICE_ID" || true
+          xcrun simctl bootstatus "$DEVICE_ID" -b
+
+      - name: Run RevenueCat offerings check
+        script: |
+          flutter test integration_test/revenuecat_offerings_test.dart \
+            --dart-define=REVENUECAT_API_KEY="$REVENUECAT_IOS_KEY" \
+            -d "$DEVICE_ID"
+
+    artifacts:
+      - flutter_drive.log
+
+  # ---------------------------------------------------------------------------
   # Release: master → TestFlight, automatically
   # ---------------------------------------------------------------------------
   ios-release:

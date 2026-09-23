@@ -241,6 +241,7 @@ void main() {
       expect(find.text('Unlock your whole garage'), findsOneWidget);
       expect(find.widgetWithText(FilledButton, 'Unlock'), findsNothing);
       expect(find.textContaining('unavailable'), findsOneWidget);
+      expect(find.widgetWithText(OutlinedButton, 'Try again'), findsOneWidget);
 
       await _drainPendingTimers(tester);
     });
