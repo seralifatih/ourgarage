@@ -136,7 +136,11 @@ workflows:
   # failure).
   ios-check-iap:
     name: iOS check IAP offerings (manual, simulator)
-    <<: *instance
+    instance_type: mac_mini_m2
+    # Shorter than the shared 60-minute default: this workflow only runs a
+    # simulator + one integration test, so anywhere near an hour means
+    # something is stuck (e.g. simulator boot), not doing useful work.
+    max_build_duration: 20
 
     environment:
       <<: *environment
@@ -154,16 +158,20 @@ workflows:
       - *codegen
       - *pod_install
 
-      - name: Boot iOS Simulator
+      - name: Select iOS Simulator
         script: |
+          # Deliberately not booting here: `xcrun simctl bootstatus` has been
+          # observed to hang indefinitely on Codemagic's mac_mini images
+          # waiting on BackBoard/SpringBoard, well past any reasonable boot
+          # time. `flutter test -d <id>` boots the simulator itself and
+          # waits on Flutter's own (bounded) startup path instead, so boot
+          # is left to it.
           DEVICE_ID=$(xcrun simctl list devices available --json \
             | ruby -rjson -e 'd=JSON.parse(STDIN.read)["devices"];
                 k=d.keys.select{|k| k.include?("iOS")}.sort.last;
                 puts d[k].find{|x| x["name"].include?("iPhone")}["udid"]')
           echo "Using simulator $DEVICE_ID"
           echo "DEVICE_ID=$DEVICE_ID" >> $CM_ENV
-          xcrun simctl boot "$DEVICE_ID" || true
-          xcrun simctl bootstatus "$DEVICE_ID" -b
 
       - name: Run RevenueCat offerings check
         script: |
