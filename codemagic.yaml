@@ -158,20 +158,39 @@ workflows:
       - *codegen
       - *pod_install
 
-      - name: Select iOS Simulator
+      - name: Boot iOS Simulator
         script: |
-          # Deliberately not booting here: `xcrun simctl bootstatus` has been
+          # `flutter test -d <udid>` will NOT boot a shutdown simulator on
+          # its own — it only recognises one that's already running — so
+          # boot must happen here. But `xcrun simctl bootstatus -b` has been
           # observed to hang indefinitely on Codemagic's mac_mini images
-          # waiting on BackBoard/SpringBoard, well past any reasonable boot
-          # time. `flutter test -d <id>` boots the simulator itself and
-          # waits on Flutter's own (bounded) startup path instead, so boot
-          # is left to it.
+          # ("Waiting on BackBoard"), so instead of trusting it, boot and
+          # then poll `simctl list` directly with our own bounded timeout.
           DEVICE_ID=$(xcrun simctl list devices available --json \
             | ruby -rjson -e 'd=JSON.parse(STDIN.read)["devices"];
                 k=d.keys.select{|k| k.include?("iOS")}.sort.last;
                 puts d[k].find{|x| x["name"].include?("iPhone")}["udid"]')
           echo "Using simulator $DEVICE_ID"
           echo "DEVICE_ID=$DEVICE_ID" >> $CM_ENV
+
+          xcrun simctl boot "$DEVICE_ID" || true
+
+          for i in $(seq 1 60); do
+            STATE=$(xcrun simctl list devices available --json \
+              | ruby -rjson -e 'd=JSON.parse(STDIN.read)["devices"];
+                  all=d.values.flatten;
+                  dev=all.find{|x| x["udid"]=="'"$DEVICE_ID"'"};
+                  puts dev ? dev["state"] : "Unknown"')
+            echo "Simulator state: $STATE ($i/60)"
+            if [ "$STATE" = "Booted" ]; then
+              break
+            fi
+            sleep 5
+          done
+
+          if [ "$STATE" != "Booted" ]; then
+            echo "Simulator did not reach Booted state in time; continuing anyway."
+          fi
 
       - name: Run RevenueCat offerings check
         script: |
