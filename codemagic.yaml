@@ -102,6 +102,17 @@ definitions:
         # its own red step instead of being buried inside `flutter build ipa`.
         find . -name "Podfile" -execdir pod install \;
 
+    - &use_profiles
+      name: Apply signing profiles to Xcode project
+      script: xcode-project use-profiles
+      # The `ios_signing` block only installs the certificate and profile on
+      # the build machine; it does not touch the Xcode project. Runner is set
+      # to Automatic signing with no team, so without this step
+      # `flutter build ipa` finds nothing to sign with ("No valid code signing
+      # certificates were found"). This switches the project to manual
+      # signing with the installed profile and writes the export options
+      # plist that the Build IPA step points at.
+
   publishing: &testflight
     app_store_connect:
       auth: integration
@@ -255,17 +266,16 @@ workflows:
           echo "Building as $BUILD_NUMBER"
           echo "BUILD_NUMBER=$BUILD_NUMBER" >> $CM_ENV
 
+      - *use_profiles
+
       - name: Build IPA
         script: |
           flutter build ipa --release \
             --build-number="$BUILD_NUMBER" \
+            --export-options-plist=/Users/builder/export_options.plist \
             --dart-define=SUPABASE_URL="$SUPABASE_URL" \
             --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY" \
             --dart-define=REVENUECAT_API_KEY="$REVENUECAT_IOS_KEY"
-          # No --export-options-plist. The `ios_signing` block above makes
-          # Codemagic apply the fetched profile to the Xcode project before
-          # this runs; pointing at a plist path that may not exist turns a
-          # working build into a late, confusing failure.
 
     artifacts:
       - build/ios/ipa/*.ipa
@@ -329,6 +339,8 @@ workflows:
             "$APP_STORE_APPLE_ID" --platform IOS) + 1))
           echo "BUILD_NUMBER=$BUILD_NUMBER" >> $CM_ENV
 
+      - *use_profiles
+
       - name: Build IPA
         script: |
           # Same keys as release. Point the groups at a separate Supabase
@@ -336,6 +348,7 @@ workflows:
           # data — the workflow does not care which project it is given.
           flutter build ipa --release \
             --build-number="$BUILD_NUMBER" \
+            --export-options-plist=/Users/builder/export_options.plist \
             --dart-define=SUPABASE_URL="$SUPABASE_URL" \
             --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY" \
             --dart-define=REVENUECAT_API_KEY="$REVENUECAT_IOS_KEY" \
