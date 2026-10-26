@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +11,7 @@ import '../../data/models/service_type.dart';
 import '../../data/repositories/premium_status_provider.dart';
 import '../../data/repositories/providers.dart';
 import '../../data/repositories/stream_providers.dart';
+import '../../services/review_prompt_service.dart';
 import '../reminders/reminder_notification_scheduler.dart';
 import 'currency_default.dart';
 import 'widgets/premium_cost_field.dart';
@@ -347,8 +350,29 @@ class _ServiceRecordFormState extends ConsumerState<_ServiceRecordForm> {
 
     await _completeMatchingReminder(odometer: odometer);
 
+    // Captured before popping: this State is disposed once the screen closes.
+    final repository = ref.read(serviceRecordRepositoryProvider);
+    final reviewPrompt = ref.read(reviewPromptServiceProvider);
+    var isFirstRecord = false;
+    try {
+      isFirstRecord = await repository.countRecords() == 1;
+    } catch (error) {
+      // The record is already saved; never let the prompt check block the pop.
+      debugPrint('First-record check failed: $error');
+    }
+
     if (!mounted) return;
     context.pop(recordId);
+
+    if (isFirstRecord) {
+      // Not awaited: lets the pop animation finish without blocking the UI.
+      unawaited(
+        Future<void>.delayed(
+          const Duration(seconds: 1),
+          reviewPrompt.maybeRequestReview,
+        ),
+      );
+    }
   }
 
   /// Finds the vehicle's active rule matching this record's type and, if one

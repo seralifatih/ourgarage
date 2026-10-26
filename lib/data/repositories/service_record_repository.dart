@@ -19,6 +19,9 @@ class ServiceRecordRepository {
 
   Future<ServiceRecord?> getRecord(String id) => _dao.getRecord(id);
 
+  /// Number of live service records across all vehicles.
+  Future<int> countRecords() async => (await _dao.getAllRecords()).length;
+
   /// Creates a service record for [vehicleId].
   ///
   /// When [odometer] is higher than the vehicle's current reading, the
