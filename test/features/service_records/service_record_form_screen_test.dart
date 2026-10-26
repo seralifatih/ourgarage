@@ -9,10 +9,17 @@ import 'package:ourgarage/data/models/service_type.dart';
 import 'package:ourgarage/data/repositories/database_holder.dart';
 import 'package:ourgarage/data/repositories/premium_status_provider.dart';
 import 'package:ourgarage/features/service_records/service_record_form_screen.dart';
+import 'package:ourgarage/services/review_prompt_service.dart';
 
 import '../../support/fake_notification_plugin.dart';
 
 const _vehicleId = 'v1';
+
+/// Keeps the real store-review prompt (a platform channel) out of the tests.
+class _NoopReviewPromptService extends ReviewPromptService {
+  @override
+  Future<void> maybeRequestReview() async {}
+}
 
 /// Pumps [ServiceRecordFormScreen] behind a real router, so `context.pop()`
 /// (used by both create and edit saves) has somewhere to go.
@@ -44,6 +51,9 @@ Future<void> _pumpForm(
       overrides: [
         premiumStatusProvider.overrideWith((ref) => premium),
         fakeNotificationServiceOverride(),
+        reviewPromptServiceProvider.overrideWithValue(
+          _NoopReviewPromptService(),
+        ),
       ],
       child: MaterialApp.router(routerConfig: router),
     ),
@@ -79,6 +89,8 @@ Future<void> _tapSave(WidgetTester tester, String label) async {
   });
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 100));
+  // Lets the delayed first-record review prompt fire instead of leaking a timer.
+  await tester.pump(const Duration(seconds: 1));
 }
 
 bool _isEnabled(WidgetTester tester, Finder buttonFinder) {
