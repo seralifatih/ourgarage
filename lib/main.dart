@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
 import 'core/constants.dart';
+import 'data/repositories/premium_status_provider.dart';
+import 'services/auth_service_provider.dart';
 import 'services/purchase_service_provider.dart';
 import 'services/revenuecat_identity_sync.dart';
 
@@ -41,10 +45,36 @@ Future<void> main() async {
   // exists at all.
   container.read(revenueCatIdentitySyncProvider);
 
+  // Not awaited: the first frame must not wait on a network round-trip.
+  unawaited(_recoverMissedPurchases(container));
+
   runApp(
     UncontrolledProviderScope(
       container: container,
       child: const OurGarageApp(),
     ),
   );
+}
+
+/// Picks up purchases that never reached RevenueCat while its key was
+/// invalid, then refreshes premium status so the UI updates straight away.
+Future<void> _recoverMissedPurchases(ProviderContainer container) async {
+  try {
+    // Wait for the restored session to resolve, so the initial identify /
+    // resetIdentity is queued ahead of the receipt sync rather than after it.
+    // Throws when Supabase isn't configured: no identity will ever be
+    // applied, so syncing anonymously is correct.
+    await container
+        .read(currentUserIdProvider.future)
+        .timeout(const Duration(seconds: 10));
+  } catch (_) {}
+
+  try {
+    final unlocked = await container
+        .read(purchaseServiceProvider)
+        .syncPurchasesOnce();
+    if (unlocked) container.invalidate(premiumStatusProvider);
+  } catch (error) {
+    debugPrint('Purchase recovery failed: $error');
+  }
 }

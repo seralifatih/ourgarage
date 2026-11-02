@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ourgarage/services/purchase_service.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../support/fake_purchases_api.dart';
 
@@ -227,6 +230,124 @@ void main() {
     );
   });
 
+  group('syncPurchasesOnce', () {
+    const flagKey = 'did_sync_purchases_v1';
+
+    Future<bool?> flag() async =>
+        (await SharedPreferences.getInstance()).getBool(flagKey);
+
+    setUp(() => SharedPreferences.setMockInitialValues({}));
+
+    test('does nothing once the flag is set', () async {
+      SharedPreferences.setMockInitialValues({flagKey: true});
+      await service.configure('appl_test');
+
+      expect(await service.syncPurchasesOnce(), isFalse);
+      expect(api.getCustomerInfoCount, 0);
+      expect(api.syncCount, 0);
+    });
+
+    test('an already-premium user gets the flag without a sync', () async {
+      api.isPremium = true;
+      await service.configure('appl_test');
+
+      expect(await service.syncPurchasesOnce(), isFalse);
+      expect(api.syncCount, 0);
+      expect(await flag(), isTrue);
+      expect(service.isPremium, isTrue);
+    });
+
+    test('a non-premium user is synced, then flagged', () async {
+      api.syncGrantsPremium = true;
+      await service.configure('appl_test');
+
+      expect(await service.syncPurchasesOnce(), isTrue);
+      expect(api.syncCount, 1);
+      expect(await flag(), isTrue);
+      expect(service.isPremium, isTrue);
+    });
+
+    test('a sync that finds nothing still sets the flag', () async {
+      await service.configure('appl_test');
+
+      expect(await service.syncPurchasesOnce(), isFalse);
+      expect(api.syncCount, 1);
+      expect(await flag(), isTrue);
+      expect(service.isPremium, isFalse);
+    });
+
+    test('a failed sync leaves the flag unset for the next launch', () async {
+      api.syncError = PlatformException(code: 'test', message: 'sync failed');
+      await service.configure('appl_test');
+
+      expect(await service.syncPurchasesOnce(), isFalse);
+      expect(api.syncCount, 1);
+      expect(await flag(), isNull);
+    });
+
+    // testWidgets for its fake clock, so the 30 s timeout elapses instantly.
+    testWidgets('a hung sync times out without setting the flag', (
+      tester,
+    ) async {
+      // Built here, not in setUp, so its futures and timers live on the
+      // fake clock's zone.
+      final api = FakePurchasesApi()..syncHang = Completer<void>();
+      final service = PurchaseService(api)..configureForTest();
+      addTearDown(service.dispose);
+
+      bool? result;
+      unawaited(service.syncPurchasesOnce().then((value) => result = value));
+
+      await tester.pump(const Duration(seconds: 29));
+      expect(result, isNull);
+
+      await tester.pump(const Duration(seconds: 2));
+      expect(result, isFalse);
+      expect(api.syncCount, 1);
+      expect(await flag(), isNull);
+
+      // The timeout must also free the queue, or sign-in would stay stuck.
+      await service.identify('u1');
+      expect(api.loggedInAs, ['u1']);
+    });
+
+    test('is a no-op when unconfigured', () async {
+      expect(await service.syncPurchasesOnce(), isFalse);
+      expect(api.getCustomerInfoCount, 0);
+      expect(api.syncCount, 0);
+      expect(await flag(), isNull);
+    });
+
+    test('concurrent calls share one sync', () async {
+      await service.configure('appl_test');
+
+      await Future.wait([
+        service.syncPurchasesOnce(),
+        service.syncPurchasesOnce(),
+      ]);
+
+      expect(api.syncCount, 1);
+    });
+
+    test('a sign-in waits for an in-flight sync to finish', () async {
+      final hang = Completer<void>();
+      api.syncHang = hang;
+      await service.configure('appl_test');
+
+      final sync = service.syncPurchasesOnce();
+      final login = service.identify('u1');
+      await pumpEventQueue();
+
+      expect(api.syncCount, 1);
+      expect(api.loggedInAs, isEmpty);
+
+      hang.complete();
+      await sync;
+      await login;
+      expect(api.loggedInAs, ['u1']);
+    });
+  });
+
   group('getOfferings', () {
     test('returns null when unconfigured', () async {
       expect(await service.getOfferings(), isNull);
@@ -274,6 +395,12 @@ class _ThrowingLogInApi implements PurchasesApi {
 
   @override
   Future<CustomerInfo> restorePurchases() => _delegate.restorePurchases();
+
+  @override
+  Future<CustomerInfo> getCustomerInfo() => _delegate.getCustomerInfo();
+
+  @override
+  Future<void> syncPurchases() => _delegate.syncPurchases();
 
   @override
   Future<CustomerInfo> logIn(String appUserId) {

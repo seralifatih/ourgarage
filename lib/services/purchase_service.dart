@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/constants.dart';
 
@@ -21,6 +22,12 @@ abstract interface class PurchasesApi {
   Future<CustomerInfo> purchase(Package package);
 
   Future<CustomerInfo> restorePurchases();
+
+  Future<CustomerInfo> getCustomerInfo();
+
+  /// Re-sends the device's store receipts to RevenueCat without the sign-in
+  /// prompt [restorePurchases] can trigger on iOS.
+  Future<void> syncPurchases();
 
   /// Attaches [appUserId] to the current RevenueCat customer, merging in
   /// whatever was purchased anonymously before this was ever called — RevenueCat
@@ -61,6 +68,12 @@ class RevenueCatPurchasesApi implements PurchasesApi {
 
   @override
   Future<CustomerInfo> restorePurchases() => Purchases.restorePurchases();
+
+  @override
+  Future<CustomerInfo> getCustomerInfo() => Purchases.getCustomerInfo();
+
+  @override
+  Future<void> syncPurchases() => Purchases.syncPurchases();
 
   @override
   Future<CustomerInfo> logIn(String appUserId) async {
@@ -115,6 +128,20 @@ class PurchaseService {
   bool get isConfigured => _configured;
 
   void Function(CustomerInfo)? _listener;
+
+  /// Chains identity-sensitive SDK calls (logIn/logOut/receipt sync) so none
+  /// runs against a half-switched RevenueCat customer, and no [CustomerInfo]
+  /// read under one identity is published after another identity took over.
+  Future<void> _identityQueue = Future.value();
+
+  Future<bool>? _syncInFlight;
+
+  Future<T> _serialized<T>(Future<T> Function() op) {
+    final result = _identityQueue.then((_) => op());
+    // Swallow errors here so one failed op never blocks the ones after it.
+    _identityQueue = result.then((_) {}, onError: (_) {});
+    return result;
+  }
 
   /// Entitlement state over time, starting with the current value.
   Stream<bool> get isPremiumStream async* {
@@ -218,6 +245,50 @@ class PurchaseService {
     return _publish(info);
   }
 
+  static const _didSyncPurchasesKey = 'did_sync_purchases_v1';
+
+  /// One-off recovery for purchases made while the RevenueCat key was
+  /// invalid: those never reached RevenueCat, so the buyer may not have
+  /// premium. Syncs the store receipts once per install if the user isn't
+  /// already entitled.
+  ///
+  /// Returns true only when the sync newly unlocked premium. Never throws; on
+  /// failure the flag stays unset so the next launch tries again.
+  Future<bool> syncPurchasesOnce() {
+    if (!_configured) return Future.value(false);
+
+    // Timed out so a hung network call can't stall identify/resetIdentity
+    // queued behind it.
+    return _syncInFlight ??= _serialized(
+      () => _syncPurchasesOnceImpl().timeout(
+        const Duration(seconds: 30),
+        onTimeout: () => false,
+      ),
+    ).whenComplete(() => _syncInFlight = null);
+  }
+
+  Future<bool> _syncPurchasesOnceImpl() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (prefs.getBool(_didSyncPurchasesKey) ?? false) return false;
+
+      final alreadyPremium = _publish(await _api.getCustomerInfo());
+      if (alreadyPremium) {
+        await prefs.setBool(_didSyncPurchasesKey, true);
+        return false;
+      }
+
+      await _api.syncPurchases();
+      // `syncPurchases` returns nothing, so re-read to see what it changed.
+      final unlocked = _publish(await _api.getCustomerInfo());
+      await prefs.setBool(_didSyncPurchasesKey, true);
+      return unlocked;
+    } catch (error) {
+      debugPrint('RevenueCat purchase sync failed: $error');
+      return false;
+    }
+  }
+
   /// Attaches the store customer to [userId], so the RevenueCat webhook can
   /// resolve a purchase back to this user (and from there, their household).
   ///
@@ -246,17 +317,19 @@ class PurchaseService {
   /// already attached to `userId` from the first device. [restorePurchases]
   /// is what surfaces that entitlement on the second device, and is already
   /// wired to the Settings/paywall "Restore purchases" action.
-  Future<void> identify(String userId) async {
-    if (!_configured) return;
+  Future<void> identify(String userId) {
+    if (!_configured) return Future.value();
 
-    try {
-      final info = await _api.logIn(userId);
-      _publish(info);
-    } on PlatformException catch (error) {
-      // Not fatal: the user is still signed in to Supabase either way, and
-      // the next `restorePurchases`/entitlement check gets another chance.
-      debugPrint('RevenueCat logIn failed: $error');
-    }
+    return _serialized(() async {
+      try {
+        final info = await _api.logIn(userId);
+        _publish(info);
+      } on PlatformException catch (error) {
+        // Not fatal: the user is still signed in to Supabase either way, and
+        // the next `restorePurchases`/entitlement check gets another chance.
+        debugPrint('RevenueCat logIn failed: $error');
+      }
+    });
   }
 
   /// Detaches the RevenueCat identity on sign-out, reverting to a fresh
@@ -267,17 +340,19 @@ class PurchaseService {
   /// Publishes the fresh (unentitled) customer immediately, the same reason
   /// [identify] does — otherwise `isPremium` would keep reporting the signed-
   /// out user's entitlement locally until the next unrelated store event.
-  Future<void> resetIdentity() async {
-    if (!_configured) return;
+  Future<void> resetIdentity() {
+    if (!_configured) return Future.value();
 
-    try {
-      final info = await _api.logOut();
-      _publish(info);
-    } on PlatformException catch (error) {
-      // RevenueCat throws if already anonymous — harmless here, since that is
-      // exactly the state this call is trying to reach.
-      debugPrint('RevenueCat logOut failed: $error');
-    }
+    return _serialized(() async {
+      try {
+        final info = await _api.logOut();
+        _publish(info);
+      } on PlatformException catch (error) {
+        // RevenueCat throws if already anonymous — harmless here, since that
+        // is exactly the state this call is trying to reach.
+        debugPrint('RevenueCat logOut failed: $error');
+      }
+    });
   }
 
   void _onCustomerInfo(CustomerInfo info) => _publish(info);

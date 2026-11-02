@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 import 'package:ourgarage/core/constants.dart';
 import 'package:ourgarage/services/purchase_service.dart';
@@ -92,6 +94,38 @@ class FakePurchasesApi implements PurchasesApi {
     restoreCount++;
     isPremium = restoreGrantsPremium ?? isPremium;
     return _customerInfo(isPremium);
+  }
+
+  int getCustomerInfoCount = 0;
+  int syncCount = 0;
+
+  /// What [syncPurchases] should leave the user entitled to. Defaults to
+  /// whatever [isPremium] is at the time of the call.
+  bool? syncGrantsPremium;
+
+  /// When set, [syncPurchases] throws it.
+  PlatformException? syncError;
+
+  /// When set, [syncPurchases] waits on it — models a hung network call.
+  Completer<void>? syncHang;
+
+  @override
+  Future<CustomerInfo> getCustomerInfo() async {
+    getCustomerInfoCount++;
+    return _customerInfo(isPremium);
+  }
+
+  @override
+  Future<void> syncPurchases() async {
+    syncCount++;
+
+    final error = syncError;
+    if (error != null) throw error;
+
+    final hang = syncHang;
+    if (hang != null) await hang.future;
+
+    isPremium = syncGrantsPremium ?? isPremium;
   }
 
   @override
