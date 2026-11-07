@@ -1,10 +1,15 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../app_routes.dart';
+import '../../core/constants.dart';
 import '../../data/models/service_type.dart';
 import '../../data/repositories/database_holder.dart';
 import '../../data/repositories/premium_status_provider.dart';
@@ -56,6 +61,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           const _PurchasesSection(),
           const _HouseholdSection(),
+          const _FeedbackSection(),
           if (kDebugMode) const _DemoDataSection(),
           if (_debugToolsRevealed) const _DebugNotificationSection(),
         ],
@@ -162,6 +168,79 @@ class _HouseholdSection extends ConsumerWidget {
       subtitle: const Text('Have an invite code? Join to share a garage.'),
       trailing: const Icon(Icons.chevron_right),
       onTap: () => context.push(AppRoutes.joinHousehold),
+    );
+  }
+}
+
+/// "Rate OurGarage" and "Something wrong? Message me".
+///
+/// Always shown, and deliberately independent of the system rating prompt:
+/// App Store guideline 5.6.1 forbids gating or pre-screening that prompt, so
+/// these are plain links, never a "do you like the app?" question in front
+/// of it.
+class _FeedbackSection extends StatelessWidget {
+  const _FeedbackSection();
+
+  Future<void> _open(BuildContext context, Uri uri) async {
+    final messenger = ScaffoldMessenger.of(context);
+    var opened = false;
+    try {
+      opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (error) {
+      debugPrint('Could not open $uri: $error');
+    }
+    if (!opened) {
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(const SnackBar(content: Text('Could not open link')));
+    }
+  }
+
+  /// A mailto with the app and OS version prefilled, so a report arrives
+  /// with what is needed to reproduce it.
+  static Future<Uri> _feedbackEmail() async {
+    var appVersion = 'unknown';
+    try {
+      final info = await PackageInfo.fromPlatform();
+      appVersion = '${info.version} (${info.buildNumber})';
+    } catch (error) {
+      debugPrint('Could not read app version: $error');
+    }
+    final osName = Platform.isIOS ? 'iOS' : Platform.operatingSystem;
+    final body =
+        '\n\n---\n'
+        'App version: $appVersion\n'
+        '$osName version: ${Platform.operatingSystemVersion}\n';
+
+    // Built by hand: Uri.queryParameters encodes spaces as "+", which mail
+    // clients show literally.
+    return Uri.parse(
+      'mailto:${AppConstants.feedbackEmail}'
+      '?subject=${Uri.encodeComponent('OurGarage feedback')}'
+      '&body=${Uri.encodeComponent(body)}',
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ListTile(
+          leading: const Icon(Icons.star_outline),
+          title: const Text('Rate OurGarage'),
+          onTap: () =>
+              _open(context, Uri.parse(AppConstants.appStoreReviewUrl)),
+        ),
+        ListTile(
+          leading: const Icon(Icons.mail_outline),
+          title: const Text('Something wrong? Message me'),
+          onTap: () async {
+            final uri = await _feedbackEmail();
+            if (context.mounted) await _open(context, uri);
+          },
+        ),
+      ],
     );
   }
 }

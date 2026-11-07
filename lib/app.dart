@@ -13,6 +13,7 @@ import 'features/reminders/reminder_notification_scheduler.dart';
 import 'services/notification_service.dart';
 import 'services/auth_service_provider.dart';
 import 'services/notification_service_provider.dart';
+import 'services/review_prompt_service.dart';
 
 class OurGarageApp extends ConsumerStatefulWidget {
   const OurGarageApp({super.key});
@@ -30,6 +31,9 @@ class _OurGarageAppState extends ConsumerState<OurGarageApp>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     unawaited(_startNotifications());
+    // Counts the open day and acts on a review trigger from a previous
+    // session (a purchase, a household join). Never blocks the first frame.
+    unawaited(ref.read(reviewPromptServiceProvider).recordAppOpen());
   }
 
   @override
@@ -46,6 +50,7 @@ class _OurGarageAppState extends ConsumerState<OurGarageApp>
     if (state == AppLifecycleState.resumed) {
       unawaited(_rescheduleAll());
       unawaited(_syncIfSharing());
+      unawaited(ref.read(reviewPromptServiceProvider).recordAppOpen());
     }
   }
 

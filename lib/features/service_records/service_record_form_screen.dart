@@ -12,6 +12,8 @@ import '../../data/repositories/premium_status_provider.dart';
 import '../../data/repositories/providers.dart';
 import '../../data/repositories/stream_providers.dart';
 import '../../services/review_prompt_service.dart';
+import '../reminders/reminder_engine.dart';
+import '../reminders/reminder_engine_adapter.dart';
 import '../reminders/reminder_notification_scheduler.dart';
 import 'currency_default.dart';
 import 'widgets/premium_cost_field.dart';
@@ -348,7 +350,9 @@ class _ServiceRecordFormState extends ConsumerState<_ServiceRecordForm> {
           currency: currency,
         );
 
-    await _completeMatchingReminder(odometer: odometer);
+    final completedDueReminder = await _completeMatchingReminder(
+      odometer: odometer,
+    );
 
     // Captured before popping: this State is disposed once the screen closes.
     final repository = ref.read(serviceRecordRepositoryProvider);
@@ -364,14 +368,15 @@ class _ServiceRecordFormState extends ConsumerState<_ServiceRecordForm> {
     if (!mounted) return;
     context.pop(recordId);
 
-    if (isFirstRecord) {
-      // Not awaited: lets the pop animation finish without blocking the UI.
-      unawaited(
-        Future<void>.delayed(
-          const Duration(seconds: 1),
-          reviewPrompt.maybeRequestReview,
-        ),
-      );
+    final trigger = isFirstRecord
+        ? ReviewTrigger.firstServiceRecord
+        : completedDueReminder
+        ? ReviewTrigger.dueReminderCompleted
+        : null;
+    if (trigger != null) {
+      // Not awaited: the service waits for the pop animation to finish, so
+      // nothing here blocks the UI.
+      unawaited(reviewPrompt.maybeRequestReview(trigger));
     }
   }
 
@@ -381,7 +386,10 @@ class _ServiceRecordFormState extends ConsumerState<_ServiceRecordForm> {
   /// This is the linkage the product is built around: a user who logs an oil
   /// change should never have to separately tell the app "the oil change
   /// reminder is handled" — saving the record does that silently.
-  Future<void> _completeMatchingReminder({required int? odometer}) async {
+  ///
+  /// Returns whether the rule it completed was due (due now or overdue) at
+  /// the moment of saving — the "reminder done" moment for the review prompt.
+  Future<bool> _completeMatchingReminder({required int? odometer}) async {
     final ruleRepository = ref.read(reminderRuleRepositoryProvider);
     final rules = await ruleRepository
         .watchRulesForVehicle(widget.vehicle.id)
@@ -392,13 +400,24 @@ class _ServiceRecordFormState extends ConsumerState<_ServiceRecordForm> {
         .where((rule) => ServiceType.fromName(rule.type) == _type)
         .firstOrNull;
 
-    if (matchingRule == null) return;
+    if (matchingRule == null) return false;
+
+    // Measured before marking done, which resets the interval.
+    final urgency = ReminderEngine.compute(
+      rule: matchingRule.toEngineInput(),
+      vehicle: widget.vehicle.toEngineContext(),
+      now: DateTime.now(),
+    ).urgency;
+    final wasDue =
+        urgency == ReminderUrgency.overdue || urgency == ReminderUrgency.dueNow;
 
     await ruleRepository.markRuleDone(matchingRule.id, _performedAt, odometer);
 
     await ref
         .read(reminderNotificationSchedulerProvider)
         .rescheduleForRule(matchingRule.id);
+
+    return wasDue;
   }
 }
 

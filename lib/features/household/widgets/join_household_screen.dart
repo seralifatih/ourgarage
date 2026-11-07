@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app_routes.dart';
 import '../../../data/sync/sync_providers.dart';
 import '../../../services/auth_service_provider.dart';
+import '../../../services/review_prompt_service.dart';
 import '../household_service.dart';
 import '../invite_code.dart';
 import '../join_household_service.dart';
@@ -66,6 +69,7 @@ class _JoinHouseholdScreenState extends ConsumerState<JoinHouseholdScreen> {
   Future<void> _submit() async {
     final messenger = ScaffoldMessenger.of(context);
     final router = GoRouter.of(context);
+    final reviewPrompt = ref.read(reviewPromptServiceProvider);
     final code = _controller.text;
 
     setState(() {
@@ -95,6 +99,8 @@ class _JoinHouseholdScreenState extends ConsumerState<JoinHouseholdScreen> {
           .read(joinHouseholdServiceProvider)
           .join(code: code, userId: userId, choice: choice);
 
+      // Asks on the next launch, not while the join is still settling.
+      unawaited(reviewPrompt.maybeRequestReview(ReviewTrigger.householdJoined));
       if (!mounted) return;
 
       messenger
@@ -104,12 +110,14 @@ class _JoinHouseholdScreenState extends ConsumerState<JoinHouseholdScreen> {
         );
       router.go(AppRoutes.vehicleList);
     } on JoinException catch (error) {
+      reviewPrompt.markBadMoment();
       if (!mounted) return;
       setState(() {
         _busy = false;
         _error = error.message;
       });
     } on Object {
+      reviewPrompt.markBadMoment();
       if (!mounted) return;
       setState(() {
         _busy = false;

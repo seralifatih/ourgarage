@@ -15,10 +15,16 @@ import '../../support/fake_notification_plugin.dart';
 
 const _vehicleId = 'v1';
 
-/// Keeps the real store-review prompt (a platform channel) out of the tests.
-class _NoopReviewPromptService extends ReviewPromptService {
+/// Keeps the real store-review prompt (a platform channel) out of the tests,
+/// and records which triggers the form fired.
+class _RecordingReviewPromptService extends ReviewPromptService {
+  final triggers = <ReviewTrigger>[];
+
   @override
-  Future<void> maybeRequestReview() async {}
+  Future<bool> maybeRequestReview(ReviewTrigger trigger) async {
+    triggers.add(trigger);
+    return false;
+  }
 }
 
 /// Pumps [ServiceRecordFormScreen] behind a real router, so `context.pop()`
@@ -27,6 +33,7 @@ Future<void> _pumpForm(
   WidgetTester tester, {
   String? recordId,
   bool premium = false,
+  _RecordingReviewPromptService? reviewPrompt,
 }) async {
   final router = GoRouter(
     initialLocation: '/base',
@@ -52,7 +59,7 @@ Future<void> _pumpForm(
         premiumStatusProvider.overrideWith((ref) => premium),
         fakeNotificationServiceOverride(),
         reviewPromptServiceProvider.overrideWithValue(
-          _NoopReviewPromptService(),
+          reviewPrompt ?? _RecordingReviewPromptService(),
         ),
       ],
       child: MaterialApp.router(routerConfig: router),
@@ -488,6 +495,89 @@ void main() {
         expect(rule.lastDoneOdometer, 9000);
 
         await _drainPendingTimers(tester);
+      });
+
+      group('review prompt triggers', () {
+        testWidgets('the first record fires firstServiceRecord', (
+          tester,
+        ) async {
+          final reviewPrompt = _RecordingReviewPromptService();
+          await insertVehicle();
+          await _pumpForm(tester, reviewPrompt: reviewPrompt);
+
+          await _tapSave(tester, 'Add record');
+
+          expect(reviewPrompt.triggers, [ReviewTrigger.firstServiceRecord]);
+
+          await _drainPendingTimers(tester);
+        });
+
+        testWidgets('completing a due reminder fires dueReminderCompleted', (
+          tester,
+        ) async {
+          final reviewPrompt = _RecordingReviewPromptService();
+          await insertVehicle(odometer: 12500, unit: 'km');
+          // Not the first record, so only the due-reminder trigger applies.
+          await insertRecord(performedAt: DateTime(2026, 1, 10));
+          // Due at 5000 + 8000 = 13000; the vehicle is at 14000, so overdue.
+          await insertRule(
+            id: 'r1',
+            type: ServiceType.oilChange,
+            intervalDistance: 8000,
+            lastDoneOdometer: 5000,
+          );
+          await (db.update(
+            db.vehicles,
+          )).write(const VehiclesCompanion(odometer: Value(14000)));
+          await _pumpForm(tester, reviewPrompt: reviewPrompt);
+
+          await _tapSave(tester, 'Add record');
+
+          expect(reviewPrompt.triggers, [ReviewTrigger.dueReminderCompleted]);
+
+          await _drainPendingTimers(tester);
+        });
+
+        testWidgets('completing a reminder that is not due fires nothing', (
+          tester,
+        ) async {
+          final reviewPrompt = _RecordingReviewPromptService();
+          await insertVehicle(odometer: 12500, unit: 'km');
+          await insertRecord(performedAt: DateTime(2026, 1, 10));
+          // Due at 10000 + 8000 = 18000: 5500 km away, up to date.
+          await insertRule(
+            id: 'r1',
+            type: ServiceType.oilChange,
+            intervalDistance: 8000,
+            lastDoneOdometer: 10000,
+          );
+          await _pumpForm(tester, reviewPrompt: reviewPrompt);
+
+          await _tapSave(tester, 'Add record');
+
+          expect(reviewPrompt.triggers, isEmpty);
+
+          await _drainPendingTimers(tester);
+        });
+
+        testWidgets('editing a record fires nothing', (tester) async {
+          final reviewPrompt = _RecordingReviewPromptService();
+          await insertVehicle();
+          final recordId = await insertRecord(
+            performedAt: DateTime(2026, 1, 10),
+          );
+          await _pumpForm(
+            tester,
+            recordId: recordId,
+            reviewPrompt: reviewPrompt,
+          );
+
+          await _tapSave(tester, 'Save changes');
+
+          expect(reviewPrompt.triggers, isEmpty);
+
+          await _drainPendingTimers(tester);
+        });
       });
 
       testWidgets('leaves reminders alone when editing a record', (

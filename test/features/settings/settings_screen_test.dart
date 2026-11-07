@@ -37,6 +37,14 @@ Future<void> _drainPendingTimers(WidgetTester tester) async {
   await tester.pump(Duration.zero);
 }
 
+/// The debug rows sit below the always-visible sections, past the bottom of
+/// the 800x600 test viewport, so they are scrolled into view first.
+Future<void> _tapDebugRow(WidgetTester tester, String label) async {
+  await tester.ensureVisible(find.text(label));
+  await tester.pump();
+  await tester.tap(find.text(label));
+}
+
 Future<void> _tapTitle(WidgetTester tester, {int times = 5}) async {
   for (var i = 0; i < times; i++) {
     await tester.tap(find.text('Settings'));
@@ -97,7 +105,7 @@ void main() {
     await _tapTitle(tester);
     await _settle(tester);
 
-    await tester.tap(find.text('Debug: fire test reminder'));
+    await _tapDebugRow(tester, 'Debug: fire test reminder');
     await tester.runAsync(() async {
       await Future<void>.delayed(const Duration(milliseconds: 300));
     });
@@ -120,7 +128,7 @@ void main() {
       await _tapTitle(tester);
       await _settle(tester);
 
-      await tester.tap(find.text('Debug: fire test reminder'));
+      await _tapDebugRow(tester, 'Debug: fire test reminder');
       await tester.runAsync(() async {
         await Future<void>.delayed(const Duration(milliseconds: 300));
       });
@@ -151,13 +159,13 @@ void main() {
     await _tapTitle(tester);
     await _settle(tester);
 
-    await tester.tap(find.text('Debug: fire test reminder'));
+    await _tapDebugRow(tester, 'Debug: fire test reminder');
     await tester.runAsync(() async {
       await Future<void>.delayed(const Duration(milliseconds: 300));
     });
     await _settle(tester);
 
-    await tester.tap(find.text('Debug: print pending notifications'));
+    await _tapDebugRow(tester, 'Debug: print pending notifications');
     await tester.runAsync(() async {
       await Future<void>.delayed(const Duration(milliseconds: 300));
     });

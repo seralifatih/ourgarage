@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../app_routes.dart';
 import '../../core/constants.dart';
 import '../../services/purchase_service_provider.dart';
+import '../../services/review_prompt_service.dart';
 import 'paywall_providers.dart';
 
 /// Which of the two products the user is about to buy.
@@ -51,10 +54,21 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
   Future<void> _purchase(Package package) async {
     final messenger = ScaffoldMessenger.of(context);
     final purchases = ref.read(purchaseServiceProvider);
+    final reviewPrompt = ref.read(reviewPromptServiceProvider);
 
     setState(() => _busy = true);
     try {
       final isPremium = await purchases.purchasePackage(package);
+
+      if (isPremium) {
+        // Asks on the next launch, never on top of the purchase itself.
+        unawaited(
+          reviewPrompt.maybeRequestReview(ReviewTrigger.purchaseCompleted),
+        );
+      } else {
+        // The user backed out of the store sheet.
+        reviewPrompt.markBadMoment();
+      }
       if (!mounted) return;
 
       if (isPremium) {
@@ -68,11 +82,17 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
       // Not entitled and no error: the user backed out of the store sheet,
       // which needs no message of its own.
     } on PlatformException catch (error) {
+      reviewPrompt.markBadMoment();
       messenger
         ..hideCurrentSnackBar()
         ..showSnackBar(
           SnackBar(content: Text(error.message ?? 'Purchase failed')),
         );
+    } on Object {
+      // Any other failure is still a failed purchase; behaviour is otherwise
+      // unchanged, so it propagates as before.
+      reviewPrompt.markBadMoment();
+      rethrow;
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -98,6 +118,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
         );
       if (isPremium) _close(context);
     } on PlatformException catch (error) {
+      ref.read(reviewPromptServiceProvider).markBadMoment();
       messenger
         ..hideCurrentSnackBar()
         ..showSnackBar(
@@ -120,12 +141,23 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
     final annual = offering?.annual;
     final selectedPackage = _selected == _Plan.lifetime ? lifetime : annual;
 
+    // "Purchases are unavailable" is an error state, which rules out a rating
+    // prompt for this session. Setting the flag is idempotent, so it is safe
+    // to do from build.
+    if (!offeringAsync.isLoading && lifetime == null && annual == null) {
+      ref.read(reviewPromptServiceProvider).markBadMoment();
+    }
+
     return Scaffold(
       appBar: AppBar(
         // Visible from the first frame, never delayed. See the class doc.
         leading: IconButton(
           icon: const Icon(Icons.close),
-          onPressed: () => _close(context),
+          onPressed: () {
+            // Dismissing the paywall is never a moment to ask for a rating.
+            ref.read(reviewPromptServiceProvider).markBadMoment();
+            _close(context);
+          },
           tooltip: 'Close',
         ),
       ),

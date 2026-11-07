@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app_routes.dart';
 import '../../data/local/database.dart';
+import '../../services/review_prompt_service.dart';
 import 'vehicle_list_providers.dart';
 import 'widgets/odometer_update_sheet.dart';
 import 'widgets/vehicle_card.dart';
@@ -30,7 +31,12 @@ class VehicleListScreen extends ConsumerWidget {
       ),
       body: entries.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => _ErrorView(error: error),
+        error: (error, _) {
+          // An error screen rules out a rating prompt for this session.
+          // Setting the flag is idempotent, so it is safe from build.
+          ref.read(reviewPromptServiceProvider).markBadMoment();
+          return _ErrorView(error: error);
+        },
         data: (list) => list.isEmpty
             ? VehicleListEmptyState(onAddVehicle: () => _addVehicle(context))
             : _VehicleList(entries: list),
