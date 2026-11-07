@@ -6,10 +6,12 @@ import 'package:go_router/go_router.dart';
 
 import '../../app_routes.dart';
 import '../../data/models/service_type.dart';
+import '../../data/repositories/database_holder.dart';
 import '../../data/repositories/premium_status_provider.dart';
 import '../../data/repositories/providers.dart';
 import '../../services/auth_service_provider.dart';
 import '../../services/notification_service_provider.dart';
+import '../../debug/demo_data.dart';
 import '../../services/purchase_service_provider.dart';
 import '../paywall/paywall_providers.dart';
 
@@ -54,6 +56,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           const _PurchasesSection(),
           const _HouseholdSection(),
+          if (kDebugMode) const _DemoDataSection(),
           if (_debugToolsRevealed) const _DebugNotificationSection(),
         ],
       ),
@@ -159,6 +162,58 @@ class _HouseholdSection extends ConsumerWidget {
       subtitle: const Text('Have an invite code? Join to share a garage.'),
       trailing: const Icon(Icons.chevron_right),
       onTap: () => context.push(AppRoutes.joinHousehold),
+    );
+  }
+}
+
+/// Debug-only: loads or removes the sample garage from `DemoData`.
+class _DemoDataSection extends StatelessWidget {
+  const _DemoDataSection();
+
+  Future<void> _run(
+    BuildContext context,
+    Future<void> Function() action,
+    String done,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    String message;
+    try {
+      await action();
+      message = done;
+    } catch (error) {
+      message = 'Demo data failed: $error';
+    }
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ListTile(
+          title: const Text('Load demo data'),
+          subtitle: const Text(
+            '3 vehicles, service history, reminders and premium (debug only)',
+          ),
+          onTap: () => _run(
+            context,
+            () => DemoData.load(DatabaseHolder.instance),
+            'Demo data loaded',
+          ),
+        ),
+        ListTile(
+          title: const Text('Clear demo data'),
+          subtitle: const Text('Removes only the demo rows (debug only)'),
+          onTap: () => _run(
+            context,
+            () => DemoData.clear(DatabaseHolder.instance),
+            'Demo data cleared',
+          ),
+        ),
+      ],
     );
   }
 }
