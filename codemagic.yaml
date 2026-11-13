@@ -29,7 +29,11 @@ definitions:
     # so the failure arrives late, after a green build, looking like a
     # publishing problem.
     xcode: 26.0
-    flutter: stable
+    # Pinned, not `stable`: stable moved to Dart 3.14, whose flutter_test
+    # pins matcher 0.12.20 — unresolvable with riverpod_annotation 4.0.3 +
+    # riverpod_generator 4.0.4 (pub get fails). 3.44.9 matches local dev.
+    # Unpin after upgrading riverpod; see PRELAUNCH.md "Follow-ups".
+    flutter: 3.44.9
     cocoapods: default
 
   # Injected via --dart-define; see the build steps. Create these groups in

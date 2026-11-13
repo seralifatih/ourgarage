@@ -304,3 +304,17 @@ against. See the note under "Crash-free launch" for what that changes.
       pass through: onboarding → add vehicle → log service → set reminder →
       hit paywall → dismiss paywall → (once the join screen exists) attempt
       household join with a bad code → attempt with a good code.
+
+---
+
+## Follow-ups
+
+- [ ] **Upgrade riverpod, then unpin Flutter in CI.** `codemagic.yaml` pins
+      `flutter: 3.44.9` because Codemagic's `stable` (Dart 3.14) fails
+      `flutter pub get`: its `flutter_test` pins `matcher 0.12.20`, which
+      can't resolve against `riverpod_annotation: 4.0.3` +
+      `riverpod_generator: ^4.0.4`. Fix: bump `riverpod_annotation` to
+      `^4.0.8` and `riverpod_generator` to the matching release, re-run
+      `dart run build_runner build`, `flutter analyze` and `flutter test` on
+      the newer Flutter, then change `flutter: 3.44.9` back to
+      `flutter: stable`.
