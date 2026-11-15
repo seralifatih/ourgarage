@@ -306,7 +306,15 @@ workflows:
       - build/ios/archive/Runner.xcarchive/dSYMs/**/*.dSYM
       - flutter_drive.log
 
-    publishing: *testflight
+    # Not *testflight: that anchor also submits to Beta App Review, which only
+    # external testers need (there are none), and which Apple allows for one
+    # build per version at a time — so a second push while the first build was
+    # still in review failed the whole run with a 422. The build is still
+    # uploaded to App Store Connect and available to internal testers.
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: false
 
   # ---------------------------------------------------------------------------
   # Debug: any branch, manual, also to TestFlight
