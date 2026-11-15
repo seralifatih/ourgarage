@@ -1,10 +1,23 @@
 ---
+import QRCode from 'qrcode';
 import Base from '../layouts/Base.astro';
 import { getGuides, guideUrl } from '../lib/guides';
 import { SITE_URL, APP_STORE_ID, appStoreUrl } from '../site';
 
 const guides = (await getGuides()).slice(0, 6);
 const store = appStoreUrl('seo-home');
+
+// Desktop visitors can't install from their computer, so the hero offers a QR
+// code to scan with their iPhone. Generated at build time as inline SVG (no
+// request, no third-party service), with its own campaign token so scans show
+// up separately from badge taps in App Analytics.
+const qrUrl = appStoreUrl('seo-home-qr');
+const qrSvg = await QRCode.toString(qrUrl, {
+    type: 'svg',
+    errorCorrectionLevel: 'M',
+    margin: 2, // quiet zone; the card's padding adds more
+    color: { dark: '#16201f', light: '#ffffff' },
+});
 
 const jsonLd = [
   {
@@ -32,11 +45,22 @@ const jsonLd = [
   jsonLd={jsonLd}
 >
   <section class="hero wrap wide">
-    <h1>Know what your car needs before it becomes a problem</h1>
-    <p class="lede">OurGarage reminds you about oil changes, tire rotations and every other service by date, by mileage, or both. Everyone in your household sees the same cars, the same history and the same reminders on their own phone.</p>
-    <a class="badge-link" href={store} rel="noopener">
-      <img src="/app-store-badge.svg" alt="Download on the App Store" width="162" height="54">
-    </a>
+    <div class="hero-grid">
+      <div>
+        <h1>Know what your car needs before it becomes a problem</h1>
+        <p class="lede">OurGarage reminds you about oil changes, tire rotations and every other service by date, by mileage, or both. Everyone in your household sees the same cars, the same history and the same reminders on their own phone.</p>
+        <a class="badge-link" href={store} rel="noopener">
+          <img src="/app-store-badge.svg" alt="Download on the App Store" width="162" height="54">
+        </a>
+      </div>
+      {/* Also a link: clickable on desktop, and a fallback for anyone who
+          can't scan. The image is decorative to screen readers; the caption
+          says what it is. */}
+      <a class="qr-card" href={qrUrl} rel="noopener">
+        <span class="qr" aria-hidden="true" set:html={qrSvg} />
+        <span class="qr-caption">On your computer? Scan with your iPhone camera to get the app.</span>
+      </a>
+    </div>
   </section>
 
   <section class="wrap wide">
