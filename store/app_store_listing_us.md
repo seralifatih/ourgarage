@@ -129,8 +129,8 @@ An account is only needed for household sharing, and you are only ever asked
 for one at the moment you tap Share. Sign in with Apple — no password, no
 email list, no third-party sign-ins.
 
-Terms: https://noktastudio.dev/ourgarage/terms
-Privacy: https://noktastudio.dev/ourgarage/privacy
+Terms: https://ourgarage.app/terms/
+Privacy: https://ourgarage.app/privacy/
 ```
 
 ---

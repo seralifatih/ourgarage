@@ -33,14 +33,13 @@ class AppConstants {
   static const String lifetimeProductId = 'ourgarage_lifetime';
   static const String annualProductId = 'ourgarage_annual';
 
-  // Source text lives in `store/legal/`, published from `docs/` via GitHub
-  // Pages. These must be live and reachable before submission — review
-  // rejects an IAP paywall whose legal links 404. Point these at
-  // noktastudio.dev instead once that domain is actually hosting the pages.
-  static const String termsUrl =
-      'https://seralifatih.github.io/ourgarage/ourgarage/terms/';
-  static const String privacyUrl =
-      'https://seralifatih.github.io/ourgarage/ourgarage/privacy/';
+  // Served by the ourgarage.app site (website/src/pages/{terms,privacy,
+  // support}.astro). These must be live and reachable before submission —
+  // review rejects an IAP paywall whose legal links 404. The old GitHub Pages
+  // URLs under docs/ourgarage/ redirect here, so builds up to 1.0.6 keep
+  // working.
+  static const String termsUrl = 'https://ourgarage.app/terms/';
+  static const String privacyUrl = 'https://ourgarage.app/privacy/';
 
   /// Opens the App Store "write a review" page. Linked from Settings and
   /// always visible — unrelated to the system rating prompt.

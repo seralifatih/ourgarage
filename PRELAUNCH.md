@@ -61,12 +61,12 @@ against. See the note under "Crash-free launch" for what that changes.
       of implying a feature that isn't there — this is a real gap, not just a
       documentation fix, and it's the honest current answer for the
       account-deletion requirement below.
-- [ ] `https://noktastudio.dev/ourgarage/terms` is **live and returns 200**,
+- [ ] `https://ourgarage.app/terms/` is **live and returns 200**,
       not a 404 or a placeholder page — verify by curling it, not by trusting
-      the constant in `lib/core/constants.dart`. **Not yet hosted — this is
-      still local markdown, nobody has published it to the domain.**
-- [ ] `https://noktastudio.dev/ourgarage/privacy` is live and returns 200.
-      **Same — not yet hosted.**
+      the constant in `lib/core/constants.dart`. **Hosted on ourgarage.app
+      since 2026-11-15 (website/src/pages/terms.astro).**
+- [ ] `https://ourgarage.app/privacy/` is live and returns 200.
+      **Hosted (website/src/pages/privacy.astro).**
 - [ ] Both pages are reachable **without authentication** and without a
       redirect chain that a reviewer's automated check might not follow.
 - [ ] The content hosted matches `store/legal/terms.md` and

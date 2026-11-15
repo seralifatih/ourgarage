@@ -114,7 +114,7 @@ of it.
 
 If you use OurGarage without an account, all of your data stays on your device
 and is never transmitted to us. If you use household sharing, our
-[Privacy Policy](https://noktastudio.dev/ourgarage/privacy) describes in full
+[Privacy Policy](https://ourgarage.app/privacy/) describes in full
 what data we collect, why, and how you can have it deleted.
 
 **OurGarage does not currently include a built-in data-export feature.** If

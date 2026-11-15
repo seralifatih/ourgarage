@@ -111,8 +111,8 @@ OURGARAGE PREMIUM
   before the end of the current period. Manage or cancel anytime in
   Settings > [your name] > Subscriptions.
 
-Terms of Use (EULA): https://seralifatih.github.io/ourgarage/ourgarage/terms/
-Privacy Policy: https://seralifatih.github.io/ourgarage/ourgarage/privacy/
+Terms of Use (EULA): https://ourgarage.app/terms/
+Privacy Policy: https://ourgarage.app/privacy/
 ```
 
 **Guideline 3.1.2(c) reddi buradan geliyordu — düzeltildi:** Apple, uygulama içindeki Terms/Privacy linklerini yeterli görmüyor, App Store **metadata**'sında (Description veya EULA alanı) da fonksiyonel bir link istiyor. Yukarıdaki "OURGARAGE PREMIUM" bloğu + linkler artık Description'ın sonunda — Description alanını güncellerken bunu da ekle.
