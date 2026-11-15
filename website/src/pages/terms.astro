@@ -10,7 +10,7 @@ import Base from '../layouts/Base.astro';
 >
   <article class="wrap prose legal">
     <h1>Terms of Service</h1>
-    <p class="updated">Last updated: 20 August 2026</p>
+    <p class="updated">Last updated: 15 November 2026</p>
 
     <h2>1. What this is</h2>
     <p>OurGarage is a mobile app for tracking vehicle maintenance: service history,
@@ -39,8 +39,8 @@ import Base from '../layouts/Base.astro';
     unlimited maintenance reminders, and full functionality with no internet
     connection required. It is not a time-limited trial. No feature available in
     the free tier is disabled or degraded after any period of use.</p>
-    <p><strong>OurGarage Premium</strong> additionally unlocks tracking of unlimited vehicles and
-    household sharing. It is offered as two separate purchases:</p>
+    <p><strong>OurGarage Premium</strong> additionally unlocks tracking of unlimited vehicles,
+    household sharing, and exporting your records. It is offered as two separate purchases:</p>
     <ul>
       <li><strong>Lifetime</strong> — a one-time, non-consumable in-app purchase priced at $9.99
       USD (or the equivalent in your local currency, as set by Apple for your
@@ -50,7 +50,9 @@ import Base from '../layouts/Base.astro';
     </ul>
     <p>Purchasing either option unlocks Premium for <strong>every member of your
     household</strong>, not only the purchasing account. Only one member needs to
-    purchase Premium; the others are not separately charged.</p>
+    purchase Premium; the others are not separately charged. If the member
+    whose purchase unlocked Premium deletes their account, Premium leaves the
+    household with them; the purchase remains on their Apple ID.</p>
 
     <h3>How subscriptions work</h3>
     <p>If you purchase the Annual subscription, payment is charged to your Apple ID
@@ -74,7 +76,7 @@ import Base from '../layouts/Base.astro';
     override Apple's decision on a refund request, or access your payment
     information to do so. If you believe you were charged in error or that a
     feature you paid for is not working, contact us at
-    <strong>noktadevstudio@gmail.com</strong> first — we would rather resolve the underlying
+    <strong>support@noktastudio.dev</strong> first — we would rather resolve the underlying
     problem than have you go through a refund process.</p>
 
     <h3>Price changes</h3>
@@ -89,6 +91,9 @@ import Base from '../layouts/Base.astro';
     <p>If you create a household, you are its owner. As owner, you can invite other
     people to join it, revoke invitations you have not yet sent, and remove
     members from the household.</p>
+    <p>If you delete your account while your household has other members,
+    ownership passes to the member who joined it first, and the household and
+    its data carry on for them.</p>
     <p>Invitation codes expire seven days after they are generated and can be
     redeemed by one person, one time.</p>
     <p><strong>Read this carefully before inviting anyone: every member of a household can
@@ -111,9 +116,11 @@ import Base from '../layouts/Base.astro';
     and is never transmitted to us. If you use household sharing, our
     <a href="/privacy/">Privacy Policy</a> describes in full
     what data we collect, why, and how you can have it deleted.</p>
-    <p><strong>OurGarage does not currently include a built-in data-export feature.</strong> If
-    data portability matters to you, keep your own independent record of anything
-    you cannot afford to lose until such a feature exists.</p>
+    <p>OurGarage Premium lets you export your records from Settings &rarr;
+    <strong>Export records</strong>, as a CSV file of every vehicle and service record or
+    as a PDF service history for one vehicle. Exports are created on your device
+    and go only where you share them. Keep your own copy of anything you cannot
+    afford to lose.</p>
 
     <h2>6. Availability of the service</h2>
     <p>We aim to keep OurGarage's shared-household features available and working
@@ -163,10 +170,14 @@ import Base from '../layouts/Base.astro';
 
     <h2>9. Ending your use of OurGarage</h2>
     <p>You may stop using OurGarage at any time by deleting the app from your device.</p>
-    <p><strong>OurGarage does not currently have an in-app account-deletion flow.</strong> If you
-    have created an account and want it and your associated data deleted, email
-    <strong>noktadevstudio@gmail.com</strong>; see the Privacy Policy for details on how that
-    process works and what happens to shared household data when you do.</p>
+    <p>If you have created an account, you can delete it at any time inside the
+    app: Settings &rarr; <strong>Delete account</strong>. You can also ask us to delete it by
+    emailing <strong>support@noktastudio.dev</strong>. The
+    <a href="/privacy/">Privacy Policy</a> describes exactly what is deleted and what
+    happens to shared household data. In short: a household you were the only
+    member of is deleted; a household you owned that has other members is handed
+    to the member who joined first; data on your device stays on your device.
+    Deleting your account does not cancel an App Store subscription.</p>
     <p>We may suspend or terminate your access to household-sharing features for a
     serious or repeated breach of these terms. Where practical, we will tell you
     why before doing so.</p>
@@ -183,6 +194,6 @@ import Base from '../layouts/Base.astro';
     cannot be waived by agreement.</p>
 
     <h2>12. Contact</h2>
-    <p><strong>noktadevstudio@gmail.com</strong></p>
+    <p><strong>support@noktastudio.dev</strong></p>
   </article>
 </Base>
