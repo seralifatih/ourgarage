@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../app_routes.dart';
 import '../../core/constants.dart';
+import '../../data/local/database.dart';
 import '../../data/models/service_type.dart';
 import '../../data/repositories/database_holder.dart';
 import '../../data/repositories/premium_status_provider.dart';
@@ -17,6 +18,7 @@ import '../../data/repositories/providers.dart';
 import '../../services/auth_service_provider.dart';
 import '../../services/notification_service_provider.dart';
 import '../../debug/demo_data.dart';
+import '../export/export_service.dart';
 import '../../services/purchase_service_provider.dart';
 import '../paywall/paywall_providers.dart';
 
@@ -60,6 +62,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         children: [
           const _PurchasesSection(),
+          const _ExportSection(),
           const _HouseholdSection(),
           const _FeedbackSection(),
           if (kDebugMode) const _DemoDataSection(),
@@ -137,6 +140,154 @@ class _PurchasesSectionState extends ConsumerState<_PurchasesSection> {
           onTap: _restoring ? null : _restore,
         ),
       ],
+    );
+  }
+}
+
+/// What the export sheet returns: the CSV, or one vehicle's PDF history.
+sealed class _ExportChoice {
+  const _ExportChoice();
+}
+
+class _CsvChoice extends _ExportChoice {
+  const _CsvChoice();
+}
+
+class _PdfChoice extends _ExportChoice {
+  const _PdfChoice(this.vehicle);
+  final Vehicle vehicle;
+}
+
+/// "Export records" — a Premium feature, as the paywall promises ("Log
+/// service costs and export your records").
+///
+/// Without Premium the row is still shown, and opens the paywall: hiding it
+/// would make the paywall's promise unfindable. With Premium it offers the
+/// all-vehicles CSV, or a PDF service history per vehicle (the resale
+/// document), and hands the file to the iOS share sheet.
+class _ExportSection extends ConsumerStatefulWidget {
+  const _ExportSection();
+
+  @override
+  ConsumerState<_ExportSection> createState() => _ExportSectionState();
+}
+
+class _ExportSectionState extends ConsumerState<_ExportSection> {
+  bool _exporting = false;
+
+  /// The row's on-screen rect: the iPad share sheet is a popover and needs
+  /// an anchor.
+  Rect? _originOf(BuildContext tileContext) {
+    final box = tileContext.findRenderObject();
+    if (box is! RenderBox || !box.hasSize) return null;
+    return box.localToGlobal(Offset.zero) & box.size;
+  }
+
+  void _snack(ScaffoldMessengerState messenger, String message) {
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _onTap(BuildContext tileContext) async {
+    if (!ref.read(premiumStatusProvider)) {
+      context.push(AppRoutes.paywall);
+      return;
+    }
+
+    final messenger = ScaffoldMessenger.of(context);
+    final service = ref.read(exportServiceProvider);
+    final origin = _originOf(tileContext);
+
+    final List<Vehicle> vehicles;
+    try {
+      vehicles = await service.vehicles();
+    } catch (error) {
+      debugPrint('Export: could not read vehicles: $error');
+      _snack(messenger, 'Could not export your records. Please try again.');
+      return;
+    }
+    if (!mounted) return;
+    if (vehicles.isEmpty) {
+      _snack(messenger, 'Nothing to export yet. Add a vehicle first.');
+      return;
+    }
+
+    final choice = await showModalBottomSheet<_ExportChoice>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.table_chart_outlined),
+              title: const Text('All records (CSV)'),
+              subtitle: const Text(
+                'Every vehicle and service, with dates, mileage and costs. '
+                'Opens in Numbers, Excel or Google Sheets.',
+              ),
+              onTap: () => Navigator.of(sheetContext).pop(const _CsvChoice()),
+            ),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 4),
+              child: Text(
+                'Service history (PDF)',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+            for (final vehicle in vehicles)
+              ListTile(
+                leading: const Icon(Icons.picture_as_pdf_outlined),
+                title: Text(vehicle.nickname),
+                subtitle: const Text('For a buyer, or your own records'),
+                onTap: () =>
+                    Navigator.of(sheetContext).pop(_PdfChoice(vehicle)),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (choice == null || !mounted) return;
+
+    setState(() => _exporting = true);
+    try {
+      switch (choice) {
+        case _CsvChoice():
+          await service.shareRecordsCsv(origin: origin);
+        case _PdfChoice(:final vehicle):
+          await service.shareServiceHistoryPdf(vehicle, origin: origin);
+      }
+    } catch (error) {
+      debugPrint('Export failed: $error');
+      _snack(messenger, 'Could not export your records. Please try again.');
+    } finally {
+      if (mounted) setState(() => _exporting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isPremium = ref.watch(premiumStatusProvider);
+
+    return Builder(
+      builder: (tileContext) => ListTile(
+        leading: const Icon(Icons.ios_share),
+        title: const Text('Export records'),
+        subtitle: Text(
+          isPremium
+              ? 'CSV of every service, or a PDF service history per vehicle'
+              : 'Premium: CSV of every service, or a PDF service history '
+                    'per vehicle',
+        ),
+        trailing: _exporting
+            ? const SizedBox.square(
+                dimension: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Icon(Icons.chevron_right),
+        onTap: _exporting ? null : () => _onTap(tileContext),
+      ),
     );
   }
 }

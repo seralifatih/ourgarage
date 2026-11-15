@@ -14,6 +14,13 @@ Future<void> _pumpScreen(
   FakeNotificationPlugin? plugin,
   FakePurchasesApi? purchases,
 }) async {
+  // Tall enough that every section, including the debug rows at the bottom,
+  // is built by the lazy ListView; otherwise "row is hidden" assertions
+  // would pass trivially for rows that merely haven't been built yet.
+  tester.view.physicalSize = const Size(800, 1400);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.reset);
+
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
@@ -37,8 +44,8 @@ Future<void> _drainPendingTimers(WidgetTester tester) async {
   await tester.pump(Duration.zero);
 }
 
-/// The debug rows sit below the always-visible sections, past the bottom of
-/// the 800x600 test viewport, so they are scrolled into view first.
+/// The debug rows sit below the always-visible sections, so they are scrolled
+/// into view first.
 Future<void> _tapDebugRow(WidgetTester tester, String label) async {
   await tester.ensureVisible(find.text(label));
   await tester.pump();
