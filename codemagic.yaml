@@ -248,7 +248,25 @@ workflows:
           source: true
       # Not on tags or PRs: a PR build would consume a TestFlight build number
       # for something that may never merge.
-      cancel_previous_builds: true
+      #
+      # false: a website-only push still starts a build that the changeset
+      # below then stops, and Codemagic doesn't document whether that skipped
+      # build cancels one already running. A daily guide push must never kill
+      # a release build. Cost: two app pushes in quick succession both build.
+      cancel_previous_builds: false
+
+    # The marketing site (website/), its GitHub Actions workflow and docs
+    # don't affect the app, so pushes touching only those skip this build.
+    # Codemagic always counts changes to codemagic.yaml itself, and compares
+    # against the last successful build, not the previous commit.
+    when:
+      changeset:
+        includes:
+          - '.'
+        excludes:
+          - 'website/**'
+          - '.github/**'
+          - '**/*.md'
 
     cache: *cache
 
