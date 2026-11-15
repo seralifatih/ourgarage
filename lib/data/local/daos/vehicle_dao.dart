@@ -53,6 +53,17 @@ class VehicleDao extends DatabaseAccessor<AppDatabase> with _$VehicleDaoMixin {
     );
   }
 
+  /// Clears the household from every vehicle, returning them to local-only.
+  ///
+  /// Used after account deletion. Like [assignHousehold], a bookkeeping write:
+  /// no `updatedAt` bump and nothing enqueued for sync, since there is no
+  /// longer a server to sync with.
+  Future<int> detachAllFromHousehold() {
+    return (update(vehicles)..where((v) => v.householdId.isNotNull())).write(
+      const VehiclesCompanion(householdId: Value(null)),
+    );
+  }
+
   Future<void> insertVehicle(VehiclesCompanion vehicle) {
     // Write and queue entry share a transaction: a change that lands locally
     // without a queue row would never sync, and nothing would ever notice.

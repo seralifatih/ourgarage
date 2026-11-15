@@ -15,9 +15,11 @@ import '../../data/models/service_type.dart';
 import '../../data/repositories/database_holder.dart';
 import '../../data/repositories/premium_status_provider.dart';
 import '../../data/repositories/providers.dart';
+import '../../services/auth_service.dart';
 import '../../services/auth_service_provider.dart';
 import '../../services/notification_service_provider.dart';
 import '../../debug/demo_data.dart';
+import '../account/account_deletion_service.dart';
 import '../export/export_service.dart';
 import '../../services/purchase_service_provider.dart';
 import '../paywall/paywall_providers.dart';
@@ -65,6 +67,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const _ExportSection(),
           const _HouseholdSection(),
           const _FeedbackSection(),
+          const _AccountSection(),
           if (kDebugMode) const _DemoDataSection(),
           if (_debugToolsRevealed) const _DebugNotificationSection(),
         ],
@@ -392,6 +395,160 @@ class _FeedbackSection extends StatelessWidget {
           },
         ),
       ],
+    );
+  }
+}
+
+/// "Delete account" (App Store guideline 5.1.1(v)).
+///
+/// Only shown when signed in: a free, local-only user has no account, and
+/// their data lives only on the device, where deleting the app removes it.
+class _AccountSection extends ConsumerStatefulWidget {
+  const _AccountSection();
+
+  @override
+  ConsumerState<_AccountSection> createState() => _AccountSectionState();
+}
+
+class _AccountSectionState extends ConsumerState<_AccountSection> {
+  bool _busy = false;
+
+  static const _signedOutMessage =
+      "You've been signed out. If your account still exists, sign in again "
+      'and delete it from Settings.';
+
+  void _snack(ScaffoldMessengerState messenger, String message) {
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  static String describe(DeletionImpact impact) {
+    String others(int n) => n == 1 ? '1 other member' : '$n other members';
+    return switch (impact) {
+      NoHousehold() => 'Your account is deleted from our servers.',
+      SoleMember() =>
+        'Your household and everything shared in it — cars, service '
+            'history and reminders — are deleted from our servers.',
+      OwnerHandsOver(:final otherMembers) =>
+        'Your household is handed to the member who joined first. The cars '
+            'and service history stay for the ${others(otherMembers)}.',
+      LeavesHousehold(:final otherMembers) =>
+        'You leave your household. The cars and service history stay for '
+            'the ${others(otherMembers)}.',
+    };
+  }
+
+  Future<bool> _confirm(DeletionImpact impact) async {
+    final theme = Theme.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete your account?'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final line in [
+                describe(impact),
+                'Your account and sign-in are deleted, and OurGarage\'s '
+                    'access to your Apple ID is revoked.',
+                'Everything on this iPhone stays. You can keep using '
+                    'OurGarage without an account.',
+                'If your purchase gave your household Premium, Premium leaves '
+                    'with you: it stays on your Apple ID, and you can restore '
+                    'it later. Deleting your account does not cancel an App '
+                    'Store subscription. Manage it in Settings → your name → '
+                    'Subscriptions.',
+                'To confirm, you\'ll sign in with Apple once more.',
+              ])
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Text(line),
+                ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: theme.colorScheme.error,
+            ),
+            child: const Text('Delete account'),
+          ),
+        ],
+      ),
+    );
+    return confirmed ?? false;
+  }
+
+  Future<void> _onTap() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final service = ref.read(accountDeletionServiceProvider);
+
+    setState(() => _busy = true);
+    try {
+      final DeletionImpact impact;
+      try {
+        impact = await service.impact();
+      } on SessionInvalidException {
+        _snack(messenger, _signedOutMessage);
+        return;
+      } catch (error) {
+        debugPrint('Could not load deletion impact: $error');
+        _snack(
+          messenger,
+          'Could not reach OurGarage. Check your connection and try again.',
+        );
+        return;
+      }
+      if (!mounted || !await _confirm(impact) || !mounted) return;
+
+      final deleted = await service.deleteAccount();
+      if (deleted) {
+        _snack(
+          messenger,
+          'Your account was deleted. Everything on this iPhone is still here.',
+        );
+      }
+    } on SessionInvalidException {
+      _snack(messenger, _signedOutMessage);
+    } catch (error) {
+      debugPrint('Account deletion failed: $error');
+      _snack(
+        messenger,
+        'Could not delete your account. Check your connection and try again.',
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final signedIn = ref.watch(currentUserIdProvider).asData?.value != null;
+    if (!signedIn) return const SizedBox.shrink();
+
+    final error = Theme.of(context).colorScheme.error;
+    return ListTile(
+      leading: Icon(Icons.person_remove_outlined, color: error),
+      title: Text('Delete account', style: TextStyle(color: error)),
+      subtitle: const Text(
+        'Delete your OurGarage account and the data shared through it',
+      ),
+      trailing: _busy
+          ? const SizedBox.square(
+              dimension: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : null,
+      onTap: _busy ? null : _onTap,
     );
   }
 }

@@ -47,7 +47,7 @@ class AppConstants {
       'https://apps.apple.com/app/id6801807059?action=write-review';
 
   /// Where "Something wrong? Message me" sends feedback.
-  static const String feedbackEmail = 'fatih@noktastudio.dev';
+  static const String feedbackEmail = 'support@noktastudio.dev';
 
   /// Supabase project URL and anon key, supplied at build time:
   /// `flutter run --dart-define=SUPABASE_URL=https://xxx.supabase.co \

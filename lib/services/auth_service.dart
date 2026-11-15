@@ -5,6 +5,10 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+// gotrue's own exception types, which the local [AuthException] shadows.
+import 'package:supabase_flutter/supabase_flutter.dart'
+    as sb
+    show AuthException, AuthRetryableFetchException;
 
 import '../core/constants.dart';
 
@@ -20,6 +24,16 @@ class AuthException implements Exception {
 
   @override
   String toString() => 'AuthException: $message';
+}
+
+/// The stored session can't be used: it was revoked, or the account behind it
+/// no longer exists (for example, a deletion whose response never arrived).
+/// The local session has already been cleared when this is thrown.
+class SessionInvalidException implements Exception {
+  const SessionInvalidException();
+
+  @override
+  String toString() => 'SessionInvalidException';
 }
 
 /// The slice of Supabase and Sign in with Apple this app uses.
@@ -52,6 +66,19 @@ abstract interface class AuthBackend {
 
   Future<void> signOut();
 
+  /// Refreshes the session with the auth server. Returns false when it is no
+  /// longer valid (revoked, or the user was deleted); throws on network
+  /// failure, which says nothing about validity.
+  Future<bool> refreshSession();
+
+  /// Deletes the signed-in user's account on the server (the `delete-account`
+  /// Edge Function), then ends the local session.
+  ///
+  /// [appleAuthorizationCode] lets the server revoke the user's Sign in with
+  /// Apple tokens, as Apple requires for account deletion. Throws
+  /// [AuthException] if the server did not confirm the deletion.
+  Future<void> deleteAccount({String? appleAuthorizationCode});
+
   /// Whether a profiles row already exists for [userId].
   Future<bool> profileExists(String userId);
 
@@ -82,12 +109,18 @@ abstract interface class AuthBackend {
 class AppleCredential {
   const AppleCredential({
     required this.identityToken,
+    this.authorizationCode,
     this.givenName,
     this.familyName,
     this.email,
   });
 
   final String identityToken;
+
+  /// Single-use, valid for about five minutes. Only account deletion uses it:
+  /// the server exchanges it for a token it can revoke.
+  final String? authorizationCode;
+
   final String? givenName;
   final String? familyName;
   final String? email;
@@ -180,6 +213,7 @@ class SupabaseAuthBackend implements AuthBackend {
 
       return AppleCredential(
         identityToken: idToken,
+        authorizationCode: credential.authorizationCode,
         givenName: credential.givenName,
         familyName: credential.familyName,
         email: credential.email,
@@ -211,6 +245,59 @@ class SupabaseAuthBackend implements AuthBackend {
 
   @override
   Future<void> signOut() => _client.auth.signOut();
+
+  @override
+  Future<bool> refreshSession() async {
+    if (_client.auth.currentSession == null) return false;
+    try {
+      await _client.auth.refreshSession();
+      return true;
+    } on sb.AuthRetryableFetchException {
+      rethrow;
+    } on sb.AuthException catch (error) {
+      // The SDK's own auto-refresh can win a race with this call and spend
+      // the refresh token first. That is a healthy session, not a dead one.
+      if (error.code == 'refresh_token_already_used') {
+        final session = _client.auth.currentSession;
+        if (session != null && !session.isExpired) return true;
+      }
+      // Only a definite rejection of the session means it is dead. Rate
+      // limits, 5xx and anything unrecognised are rethrown: the caller shows
+      // "try again" and nobody is signed out over a server hiccup.
+      if (const {'400', '401', '403', '404'}.contains(error.statusCode)) {
+        debugPrint('Session rejected: ${error.statusCode} ${error.code}');
+        return false;
+      }
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> deleteAccount({String? appleAuthorizationCode}) async {
+    FunctionResponse response;
+    try {
+      response = await _client.functions.invoke(
+        'delete-account',
+        body: {'appleAuthorizationCode': ?appleAuthorizationCode},
+      );
+    } on FunctionException catch (error) {
+      throw AuthException('Account deletion failed (${error.status}).');
+    }
+
+    final data = response.data;
+    if (data is! Map || data['ok'] != true) {
+      throw AuthException('Account deletion failed (${response.status}).');
+    }
+
+    // The auth user is gone, so the server-side logout this also attempts
+    // fails with 403/404 — which signOut already ignores. The local session
+    // is cleared first regardless, and that is the part that matters.
+    try {
+      await _client.auth.signOut();
+    } catch (error) {
+      debugPrint('Sign-out after account deletion: $error');
+    }
+  }
 
   @override
   Future<bool> profileExists(String userId) async {
@@ -424,6 +511,41 @@ class AuthService {
   }
 
   Future<void> signOut() => _backend.signOut();
+
+  /// Confirms the session still works before something depends on it.
+  ///
+  /// If the server rejects it, signs out locally and throws
+  /// [SessionInvalidException], so the app stops presenting a signed-in state
+  /// it can't act on — rather than failing the same way on every retry.
+  Future<void> ensureValidSession() async {
+    if (await _backend.refreshSession()) return;
+    try {
+      await _backend.signOut();
+    } catch (error) {
+      debugPrint('Local sign-out after invalid session: $error');
+    }
+    throw const SessionInvalidException();
+  }
+
+  /// Deletes the signed-in user's account. Returns false if they cancelled.
+  ///
+  /// Shows the Apple sheet once more first: it confirms it really is them, and
+  /// yields the fresh authorization code the server needs to revoke their Sign
+  /// in with Apple tokens. Local data is not touched here — see
+  /// `AccountDeletionService`, which owns the device-side cleanup.
+  Future<bool> deleteAccount() async {
+    await ensureValidSession();
+
+    final credential = await _backend.getAppleCredential(
+      rawNonce: _generateNonce(),
+    );
+    if (credential == null) return false;
+
+    await _backend.deleteAccount(
+      appleAuthorizationCode: credential.authorizationCode,
+    );
+    return true;
+  }
 
   /// "Fatih's garage", or [AppConstants.defaultHouseholdName] when Apple
   /// withheld the name — which happens on every sign-in after the first, and

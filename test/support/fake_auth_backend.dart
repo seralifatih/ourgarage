@@ -71,6 +71,15 @@ class FakeAuthBackend implements AuthBackend {
   int appleCallCount = 0;
   int signOutCount = 0;
 
+  /// Thrown from [deleteAccount] when set, before anything changes.
+  Object? deleteError;
+
+  /// The authorization code each [deleteAccount] call received.
+  final deleteCalls = <String?>[];
+
+  /// Whether the server still accepts the session (false: revoked/deleted).
+  bool sessionValid = true;
+
   /// Pre-existing server state, for the returning-user cases.
   bool profileAlreadyExists = false;
   bool householdAlreadyExists = false;
@@ -99,6 +108,7 @@ class FakeAuthBackend implements AuthBackend {
 
     return AppleCredential(
       identityToken: 'apple-identity-token',
+      authorizationCode: 'apple-auth-code-$appleCallCount',
       givenName: givenName,
       familyName: familyName,
     );
@@ -120,6 +130,17 @@ class FakeAuthBackend implements AuthBackend {
   @override
   Future<void> signOut() async {
     signOutCount++;
+    _currentUserId = null;
+    _controller.add(null);
+  }
+
+  @override
+  Future<bool> refreshSession() async => _currentUserId != null && sessionValid;
+
+  @override
+  Future<void> deleteAccount({String? appleAuthorizationCode}) async {
+    if (deleteError != null) throw deleteError!;
+    deleteCalls.add(appleAuthorizationCode);
     _currentUserId = null;
     _controller.add(null);
   }
