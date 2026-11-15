@@ -1,0 +1,43 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getGuides, guideUrl } from '../../lib/guides';
+import { SITE_URL, appStoreUrl, displayDate } from '../../site';
+
+const guides = await getGuides();
+
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: 'Car Maintenance Guides',
+    url: `${SITE_URL}/guides/`,
+    hasPart: guides.map((g) => ({ '@type': 'Article', headline: g.data.title, url: `${SITE_URL}${guideUrl(g.id)}` })),
+  },
+];
+---
+<Base
+  title="Car Maintenance Guides: Intervals, Checklists and Records | OurGarage"
+  description="Straight answers on how often to service your car, what to check before a trip, and how to keep a service record your household and the next buyer can use."
+  path="/guides/"
+  jsonLd={jsonLd}
+>
+  <div class="wrap">
+    <h1>Car maintenance guides</h1>
+    <p class="muted">Each guide answers the question first, then explains. Intervals are general ranges; your owner's manual has the exact numbers for your car.</p>
+    {guides.length === 0 ? (
+      <p>The first guides are on their way. In the meantime, <a href={appStoreUrl('seo-guides')}>OurGarage on the App Store</a> can remind you about any service by date or mileage.</p>
+    ) : (
+      <ul class="guide-list">
+        {guides.map((g) => (
+          <li>
+            <a class="guide-card" href={guideUrl(g.id)}>
+              <h2>{g.data.title}</h2>
+              <p>{g.data.description}</p>
+              <p><small>{displayDate(g.data.updated_date ?? g.data.publish_date)}</small></p>
+            </a>
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+</Base>

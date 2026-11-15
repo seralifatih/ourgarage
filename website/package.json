@@ -1,0 +1,22 @@
+{
+  "name": "ourgarage-website",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "schedule": "node scripts/schedule.mjs",
+    "og": "node scripts/make-images.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "^3.7.5",
+    "astro": "^7.4.12"
+  },
+  "devDependencies": {
+    "sharp": "^0.35.5"
+  }
+}

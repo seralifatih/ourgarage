@@ -1,0 +1,62 @@
+name: Website
+
+# Builds website/ and deploys it to Cloudflare Pages. The daily run is what
+# publishes scheduled guides: a guide is only built once its publish_date
+# (UTC) has arrived.
+on:
+  push:
+    branches: [master]
+    paths: ['website/**', '.github/workflows/website.yml']
+  schedule:
+    - cron: '5 6 * * *' # 06:05 UTC daily (1–2 AM US Eastern)
+  workflow_dispatch:
+
+concurrency:
+  group: website-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write # keepalive below
+    defaults:
+      run:
+        working-directory: website
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+
+      - run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          PUBLIC_APPSTORE_PT: ${{ vars.APPSTORE_PT }}
+          # Production builds must never include scheduled guides.
+          SHOW_SCHEDULED: ''
+          BUILD_DATE: ''
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: website
+          command: pages deploy dist --project-name=ourgarage --branch=main
+
+      # GitHub disables scheduled workflows in public repos after 60 days with
+      # no commits, which would silently stop scheduled guides going live.
+      # Re-enabling the workflow via the API resets that timer.
+      - name: Keep schedule alive
+        if: github.event_name == 'schedule'
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/website.yml/enable"

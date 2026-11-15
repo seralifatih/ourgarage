@@ -1,0 +1,75 @@
+---
+import '../styles/global.css';
+import { SITE_NAME, SITE_URL, SUPPORT_URL, PRIVACY_URL, TERMS_URL } from '../site';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Path such as "/guides/x/"; the canonical URL is built from it. */
+  path: string;
+  ogType?: 'website' | 'article';
+  jsonLd?: object[];
+  noindex?: boolean;
+  publishedTime?: string;
+  modifiedTime?: string;
+}
+
+const { title, description, path, ogType = 'website', jsonLd = [], noindex = false, publishedTime, modifiedTime } = Astro.props;
+const canonical = new URL(path, SITE_URL).href;
+const ogImage = `${SITE_URL}/og.png`;
+---
+<!doctype html>
+<html lang="en-US">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{title}</title>
+  <meta name="description" content={description}>
+  <link rel="canonical" href={canonical}>
+  {noindex && <meta name="robots" content="noindex">}
+  <meta name="theme-color" content="#0F9C8E">
+  <link rel="icon" type="image/png" href="/favicon-32.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="sitemap" href="/sitemap-index.xml">
+  <meta name="apple-itunes-app" content="app-id=6801807059">
+
+  <meta property="og:site_name" content={SITE_NAME}>
+  <meta property="og:type" content={ogType}>
+  <meta property="og:title" content={title}>
+  <meta property="og:description" content={description}>
+  <meta property="og:url" content={canonical}>
+  <meta property="og:image" content={ogImage}>
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="OurGarage: car maintenance reminders and service history for your household">
+  <meta property="og:locale" content="en_US">
+  {publishedTime && <meta property="article:published_time" content={publishedTime}>}
+  {modifiedTime && <meta property="article:modified_time" content={modifiedTime}>}
+  <meta name="twitter:card" content="summary_large_image">
+
+  {jsonLd.map((obj) => <script type="application/ld+json" set:html={JSON.stringify(obj).replaceAll('<', String.fromCharCode(92) + 'u003c')} />)}
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="brand" href="/">
+        <img src="/icon-96.png" width="32" height="32" alt="">
+        <span>OurGarage</span>
+      </a>
+      <nav aria-label="Main">
+        <a href="/guides/">Guides</a>
+      </nav>
+    </div>
+  </header>
+  <main>
+    <slot />
+  </main>
+  <footer class="site-footer">
+    <div class="wrap">
+      <p><a href="/">OurGarage</a> · <a href="/guides/">Car maintenance guides</a></p>
+      <p><a href={SUPPORT_URL}>Support</a> · <a href={PRIVACY_URL}>Privacy</a> · <a href={TERMS_URL}>Terms</a></p>
+      <p class="muted">Guides give general ranges. Your owner's manual has the exact intervals for your vehicle.</p>
+    </div>
+  </footer>
+</body>
+</html>

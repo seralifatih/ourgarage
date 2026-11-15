@@ -1,0 +1,100 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getGuides, guideUrl, finishGuideHtml, ctaHtml, isPublished, readingMinutes, type Guide } from '../../lib/guides';
+import { SITE_URL, displayDate } from '../../site';
+
+export async function getStaticPaths() {
+  const guides = await getGuides();
+  return guides.map((guide) => ({ params: { slug: guide.id }, props: { guide, all: guides } }));
+}
+
+interface Props { guide: Guide; all: Guide[] }
+const { guide, all } = Astro.props;
+const { data } = guide;
+const slug = guide.id;
+
+const live = new Set(all.map((g) => g.id));
+const rawHtml = guide.rendered?.html ?? '';
+if (!rawHtml.includes('[[cta]]')) throw new Error(`Guide "${slug}" is missing the [[cta]] marker after its key answer.`);
+const html = finishGuideHtml(rawHtml, slug, data.cta_topic, live);
+const endCta = ctaHtml(slug, data.cta_topic, 'end');
+
+const related = data.related
+  .map((s) => all.find((g) => g.id === s))
+  .filter((g): g is Guide => Boolean(g));
+
+const url = `${SITE_URL}${guideUrl(slug)}`;
+const published = data.publish_date.toISOString();
+const modified = (data.updated_date ?? data.publish_date).toISOString();
+
+const jsonLd: object[] = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: data.title,
+    description: data.description,
+    image: `${SITE_URL}/og.png`,
+    datePublished: published,
+    dateModified: modified,
+    mainEntityOfPage: url,
+    keywords: data.keywords.join(', '),
+    author: { '@type': 'Organization', name: 'OurGarage', url: SITE_URL },
+    publisher: { '@type': 'Organization', name: 'OurGarage', logo: { '@type': 'ImageObject', url: `${SITE_URL}/apple-touch-icon.png` } },
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Guides', item: `${SITE_URL}/guides/` },
+      { '@type': 'ListItem', position: 2, name: data.title, item: url },
+    ],
+  },
+];
+if (data.faq.length) {
+  jsonLd.push({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: data.faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+  });
+}
+---
+<Base
+  title={`${data.title} | OurGarage`}
+  description={data.description}
+  path={guideUrl(slug)}
+  ogType="article"
+  jsonLd={jsonLd}
+  publishedTime={published}
+  modifiedTime={modified}
+  noindex={!isPublished(guide)}
+>
+  <article class="wrap">
+    <p class="article-meta" style="margin:28px 0 0"><a href="/guides/">Guides</a></p>
+    <h1>{data.title}</h1>
+    <p class="article-meta">
+      {data.updated_date ? `Updated ${displayDate(data.updated_date)}` : displayDate(data.publish_date)}
+      · {readingMinutes(rawHtml)} min read
+    </p>
+    <div class="prose" set:html={html} />
+
+    {data.faq.length > 0 && (
+      <section class="faq">
+        <h2>Common questions</h2>
+        <dl>
+          {data.faq.map((f) => (<><dt>{f.q}</dt><dd>{f.a}</dd></>))}
+        </dl>
+      </section>
+    )}
+
+    <Fragment set:html={endCta} />
+
+    {related.length > 0 && (
+      <nav class="related" aria-label="Related guides">
+        <h2>Related guides</h2>
+        <ul>
+          {related.map((g) => <li><a href={guideUrl(g.id)}>{g.data.title}</a></li>)}
+        </ul>
+      </nav>
+    )}
+  </article>
+</Base>
