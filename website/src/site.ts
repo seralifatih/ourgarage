@@ -20,9 +20,9 @@ export function appStoreUrl(campaign: string): string {
   return `https://apps.apple.com/us/app/apple-store/id${APP_STORE_ID}?${params}`;
 }
 
-export const SUPPORT_URL = 'https://seralifatih.github.io/ourgarage/ourgarage/support/';
-export const PRIVACY_URL = 'https://seralifatih.github.io/ourgarage/ourgarage/privacy/';
-export const TERMS_URL = 'https://seralifatih.github.io/ourgarage/ourgarage/terms/';
+export const SUPPORT_URL = '/support/';
+export const PRIVACY_URL = '/privacy/';
+export const TERMS_URL = '/terms/';
 
 /** YYYY-MM-DD in UTC. BUILD_DATE overrides it to preview a future day's build. */
 export function today(): string {

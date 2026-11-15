@@ -134,3 +134,11 @@ h3 { font-size: 20px; margin: 28px 0 8px; }
   .qr svg { display: block; width: 172px; height: 172px; }
   .qr-caption { display: block; margin-top: 10px; font-size: 14px; line-height: 1.35; color: #3d4a48; }
 }
+
+/* Privacy, terms, support */
+.legal h1 { margin-bottom: 4px; }
+.legal .updated { color: var(--muted); font-size: 15px; margin: 0 0 28px; }
+.legal h2 { font-size: 22px; margin-top: 36px; }
+.legal h3 { font-size: 18px; }
+.legal code { background: var(--surface); padding: 0.1em 0.35em; border-radius: 4px; font-size: 0.9em; }
+.legal .mail { font-size: 20px; font-weight: 700; margin: 16px 0; }
