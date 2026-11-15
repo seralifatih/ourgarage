@@ -115,3 +115,9 @@ h3 { font-size: 20px; margin: 28px 0 8px; }
   body { font-size: 17px; }
   .cta { flex-direction: column; }
 }
+
+/* Free download box */
+.download { display: flex; align-items: center; gap: 14px; border: 2px dashed var(--accent-strong); border-radius: var(--radius); padding: 16px 18px; margin: 24px 0; }
+.download strong { display: block; }
+.download .dl-btn { margin-left: auto; flex: none; background: var(--surface); border: 1px solid var(--border); color: var(--accent); font-weight: 700; font-size: 16px; padding: 9px 14px; border-radius: 10px; text-decoration: none; }
+@media (max-width: 520px) { .download { flex-direction: column; align-items: flex-start; } .download .dl-btn { margin-left: 0; } }
