@@ -532,23 +532,52 @@ class _AccountSectionState extends ConsumerState<_AccountSection> {
 
   @override
   Widget build(BuildContext context) {
-    final signedIn = ref.watch(currentUserIdProvider).asData?.value != null;
-    if (!signedIn) return const SizedBox.shrink();
+    final userId = ref.watch(currentUserIdProvider);
+    // Still restoring the session: show nothing rather than flash "Not
+    // signed in" for a frame on launch.
+    if (userId.isLoading && !userId.hasValue) return const SizedBox.shrink();
+
+    // `value` keeps the last known user through a transient stream error, so
+    // a signed-in user doesn't briefly lose "Delete account". An error with
+    // no previous value means Supabase isn't configured in this build, which
+    // for the user is the same as not signed in: everything is local.
+    final signedIn = userId.value != null;
+
+    // Always shown, so a reviewer (or a user) can tell at a glance whether
+    // this device has an account — and therefore why "Delete account" does
+    // or doesn't appear under it.
+    final status = ListTile(
+      leading: Icon(
+        signedIn ? Icons.account_circle_outlined : Icons.phone_iphone,
+      ),
+      title: Text(
+        signedIn
+            ? 'Signed in with Apple'
+            : 'Not signed in — data stays on this device',
+      ),
+    );
+    if (!signedIn) return status;
 
     final error = Theme.of(context).colorScheme.error;
-    return ListTile(
-      leading: Icon(Icons.person_remove_outlined, color: error),
-      title: Text('Delete account', style: TextStyle(color: error)),
-      subtitle: const Text(
-        'Delete your OurGarage account and the data shared through it',
-      ),
-      trailing: _busy
-          ? const SizedBox.square(
-              dimension: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : null,
-      onTap: _busy ? null : _onTap,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        status,
+        ListTile(
+          leading: Icon(Icons.person_remove_outlined, color: error),
+          title: Text('Delete account', style: TextStyle(color: error)),
+          subtitle: const Text(
+            'Delete your OurGarage account and the data shared through it',
+          ),
+          trailing: _busy
+              ? const SizedBox.square(
+                  dimension: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : null,
+          onTap: _busy ? null : _onTap,
+        ),
+      ],
     );
   }
 }

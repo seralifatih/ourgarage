@@ -8,6 +8,7 @@ import 'package:ourgarage/features/account/account_deletion_service.dart';
 import 'package:ourgarage/features/household/household_service.dart';
 import 'package:ourgarage/features/settings/settings_screen.dart';
 import 'package:ourgarage/services/auth_service.dart';
+import 'package:ourgarage/services/auth_service_provider.dart';
 
 import '../../support/fake_auth_backend.dart';
 import '../../support/fake_household_backend.dart';
@@ -94,8 +95,42 @@ void main() {
     await tester.pump(Duration.zero);
   }
 
-  testWidgets('hidden for a signed-out (local-only) user', (tester) async {
+  testWidgets('signed out: says data stays local, and offers no deletion', (
+    tester,
+  ) async {
     await pump(tester, auth: FakeAuthBackend());
+    expect(
+      find.text('Not signed in — data stays on this device'),
+      findsOneWidget,
+    );
+    expect(find.text('Signed in with Apple'), findsNothing);
+    expect(find.text('Delete account'), findsNothing);
+    await drain(tester);
+  });
+
+  testWidgets('no Supabase in the build (auth stream errors): treated as '
+      'not signed in', (tester) async {
+    tester.view.physicalSize = const Size(800, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          fakeNotificationServiceOverride(null),
+          fakePurchaseServiceOverride(null),
+          currentUserIdProvider.overrideWith(
+            (ref) => Stream<String?>.error(StateError('not configured')),
+          ),
+        ],
+        child: const MaterialApp(home: SettingsScreen()),
+      ),
+    );
+    await flush(tester);
+
+    expect(
+      find.text('Not signed in — data stays on this device'),
+      findsOneWidget,
+    );
     expect(find.text('Delete account'), findsNothing);
     await drain(tester);
   });
@@ -106,6 +141,7 @@ void main() {
       ..householdAlreadyExists = true;
     await pump(tester, auth: auth);
 
+    expect(find.text('Signed in with Apple'), findsOneWidget);
     expect(find.text('Delete account'), findsOneWidget);
     await tester.tap(find.text('Delete account'));
     await flush(tester);
@@ -160,6 +196,10 @@ void main() {
       findsOneWidget,
     );
     expect(find.widgetWithText(ListTile, 'Delete account'), findsNothing);
+    expect(
+      find.text('Not signed in — data stays on this device'),
+      findsOneWidget,
+    );
     await drain(tester);
   });
 
