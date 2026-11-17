@@ -1,4 +1,9 @@
-# App Store Connect — US storefront
+# App Store Connect — US storefront (1.0.9)
+
+Updated for 1.0.9, the first version in which household sharing works end to
+end: owners invite from Settings → Household, members join with a code, and
+one purchase unlocks Premium for every member. Every claim below was checked
+against the 1.0.9 code; don't reuse this copy for a build without invites.
 
 Every field below is length-checked. Paste verbatim; the keyword field in
 particular breaks if a space sneaks in after a comma.
@@ -48,7 +53,7 @@ tradeoff, plus `mechanic`, `truck` and `care` filling the last characters.
 ## Promotional text — 151/170
 
 ```
-One person logs the oil change, everyone in the house sees it. Share one garage across your family's phones — no more asking who last serviced the car.
+New: invite your household. Everyone sees the same cars, service history and reminders on their own iPhone, and one Premium purchase covers all of you.
 ```
 
 Editable without a review cycle, so this is where the sharing angle goes. It
@@ -82,13 +87,18 @@ SHARE ONE GARAGE WITH YOUR HOUSEHOLD
 
 Most cars are not driven by one person. OurGarage is built for that.
 
-Invite your partner, your family, or whoever else drives the car. Everyone
-sees the same vehicles, the same service history, and the same reminders on
-their own phone. When one of you logs an oil change, it appears for everyone —
-so nobody buys a second air filter or books a service that was done last month.
+Invite your partner, your family, or whoever else drives the car: send them a
+one-time code from Settings → Household, and they join from their own iPhone.
+Everyone sees the same vehicles, the same service history, and the same
+reminders. When one of you logs an oil change, everyone else's phone picks it
+up when they open the app — so nobody buys a second air filter or books a
+service that was done last month.
 
 One person pays. The whole household gets Premium. Charging everyone
 separately would defeat the point.
+
+Everyone can see who's in the household and leave at any time; the owner
+can also remove someone.
 
 
 WHAT YOU GET FREE
@@ -110,7 +120,7 @@ OURGARAGE PREMIUM
 
 • Unlimited vehicles
 • Household sharing — one garage, everyone's phone
-• Service costs and spending totals
+• Service costs
 • Export your records
 
 Lifetime — pay once, keep forever.
@@ -126,8 +136,9 @@ Use OurGarage without an account and it collects nothing at all. Your garage
 lives on your phone and never touches a server.
 
 An account is only needed for household sharing, and you are only ever asked
-for one at the moment you tap Share. Sign in with Apple — no password, no
-email list, no third-party sign-ins.
+for one at the moment you tap Share or Join. Sign in with Apple — no password,
+no email list, no third-party sign-ins. You can delete your account from
+Settings at any time.
 
 Terms: https://ourgarage.app/terms/
 Privacy: https://ourgarage.app/privacy/
@@ -135,38 +146,49 @@ Privacy: https://ourgarage.app/privacy/
 
 ---
 
+## What's New in 1.0.9 — for the version's release notes
+
+```
+Household sharing is here.
+
+• Invite people from Settings → Household: send a one-time code, and they join from their own iPhone.
+• Everyone in the household sees the same cars, service history and reminders, synced when you open the app.
+• One Premium purchase now unlocks Premium for every member.
+• See who's in your household and leave at any time; owners can remove someone.
+• Clearer messages if something goes wrong while setting up a household.
+```
+
+---
+
 ## Screenshots — order matters for 4.3
 
 The description can be read carefully; the screenshots are what an App Review
-screener actually looks at. Sharing must be visible without scrolling.
+screener actually looks at.
 
-| # | Shows | Caption |
-|---|-------|---------|
-| 1 | Two phones, same garage, one service just logged | **One garage. Everyone's phone.** |
-| 2 | Household members list + invite code sheet | **Invite your partner in seconds** |
-| 3 | Reminder due notification on the lock screen | **Told before it's due** |
-| 4 | Vehicle detail: reminders + service history | **Every service, every car** |
-| 5 | Service record form with cost | **What was done, when, what it cost** |
-| 6 | Garage list with several vehicles | **The whole fleet, one place** |
+What is generated today (`test/screenshots/app_store_screenshots_test.dart`
+and `ipad_app_store_screenshots_test.dart`) — all four captions are accurate
+for 1.0.9:
 
-Screenshot 1 carries the differentiation claim. If only one image is ever
-looked at, it must be the one that is not a single-user maintenance log.
+| # | Shows | Caption (title / subtitle) |
+|---|-------|----------------------------|
+| 1 | Garage with a due reminder | **Never miss an oil change** / Reminders before maintenance is due |
+| 2 | Reminders for a vehicle | **Know what's due next** / By mileage or by date |
+| 3 | Service history | **Every service, logged** / Costs, mileage and notes in one place |
+| 4 | Paywall | **Premium for the whole household** / One member unlocks it, everyone gets it |
 
-**Review notes field** — say this explicitly, because a screener will not
-create two accounts to discover it:
+Caption 4 was not true in 1.0.8 (household premium never reached other
+members); it is in 1.0.9.
 
-```
-OurGarage is a car maintenance tracker whose primary differentiator is
-household sharing: multiple people share one garage, with service history and
-reminders synced between them, and a single purchase covering every member.
+**Recommended addition for 1.0.9** — the one image that shows sharing rather
+than describing it, placed second so it is seen without scrolling:
 
-To test sharing you need two accounts:
-1. Sign in with Apple (Settings → OurGarage Premium, or tap Share with
-   household on any vehicle).
-2. Household settings → Invite someone. A 6-character code is generated.
-3. On a second device or account: Settings → Join a household → enter the code.
-4. Both accounts now see the same vehicles and service history.
+| # | Shows | Caption (title / subtitle) |
+|---|-------|----------------------------|
+| 2 (new) | Settings → Household: two named members, one pending invite, "Invite someone" | **Share one garage** / Invite your household with a one-time code |
 
-The app is fully usable with no account and no network. An account is requested
-only when the user taps Share with household, never at launch.
-```
+Not added to the screenshot tests yet: the iPhone screenshot test has
+uncommitted edits in the working tree, and those are left alone.
+
+## Review notes
+
+See `store/app_review_notes.md` — that file is the one to paste.
