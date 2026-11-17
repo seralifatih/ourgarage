@@ -11,10 +11,13 @@ import 'data/repositories/database_holder.dart';
 import 'features/reminders/odometer_nudge_provider.dart';
 import 'data/sync/sync_providers.dart';
 import 'features/household/forget_household.dart';
+import 'features/household/household_migration_provider.dart';
+import 'features/household/household_premium_claim.dart';
 import 'features/reminders/reminder_notification_scheduler.dart';
 import 'services/notification_service.dart';
 import 'services/auth_service_provider.dart';
 import 'services/notification_service_provider.dart';
+import 'services/purchase_service_provider.dart';
 import 'services/review_prompt_service.dart';
 
 class OurGarageApp extends ConsumerStatefulWidget {
@@ -76,7 +79,24 @@ class _OurGarageAppState extends ConsumerState<OurGarageApp>
       return;
     }
 
-    await ref.read(syncServiceProvider).sync(householdId: householdId);
+    final sync = ref.read(syncServiceProvider);
+    await sync.sync(householdId: householdId);
+
+    // Catch-up for premium that never reached the household: bought before
+    // the household existed, or claimed before RevenueCat had linked the
+    // purchase to this account. Only when there is something to gain, so a
+    // resume normally costs no RevenueCat call.
+    final ownPremium = ref.read(purchaseServiceProvider).isPremium;
+    final householdPremium = await DatabaseHolder.instance
+        .householdEntitlementDao
+        .isHouseholdPremium();
+    if (ownPremium && !householdPremium) {
+      await claimHouseholdPremium(
+        households: ref.read(householdServiceProvider),
+        sync: sync,
+        householdId: householdId,
+      );
+    }
   }
 
   Future<void> _startNotifications() async {

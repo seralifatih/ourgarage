@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,9 +8,11 @@ import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestException;
 
 import '../../../app_routes.dart';
 import '../../../data/repositories/database_holder.dart';
+import '../../../data/sync/sync_providers.dart';
 import '../../../services/auth_service_provider.dart';
 import '../forget_household.dart';
 import '../household_migration_provider.dart';
+import '../household_premium_claim.dart';
 import '../household_service.dart';
 import '../invite_share.dart';
 
@@ -165,6 +169,18 @@ class _HouseholdScreenState extends ConsumerState<HouseholdScreen> {
           .read(householdServiceProvider)
           .removeMember(householdId: householdId, userId: member.userId);
       _reload();
+      // If the removed member was paying, premium was cleared with them; a
+      // reconcile lets anyone else still entitled (the owner included)
+      // restore it now rather than on their next resume.
+      if (member.userId != _userId) {
+        unawaited(
+          claimHouseholdPremium(
+            households: ref.read(householdServiceProvider),
+            sync: ref.read(syncServiceProvider),
+            householdId: householdId,
+          ),
+        );
+      }
     });
   }
 

@@ -118,6 +118,11 @@ abstract interface class HouseholdBackend {
   /// Removes the caller from [householdId]. See [LeaveOutcome].
   Future<LeaveOutcome> leaveHousehold(String householdId);
 
+  /// Asks the server to check the caller's RevenueCat entitlement and, if it
+  /// is active, make their household premium (`claim-premium`). Returns
+  /// whether any of their households is premium afterwards.
+  Future<bool> claimPremium();
+
   /// Redeems [code], returning the household joined.
   Future<String> acceptInvite(String code);
 }
@@ -212,6 +217,15 @@ class SupabaseHouseholdBackend implements HouseholdBackend {
   }
 
   @override
+  Future<bool> claimPremium() async {
+    final response = await _client.functions.invoke('claim-premium');
+    final data = response.data;
+    final households = data is Map ? data['households'] : null;
+    return households is List &&
+        households.any((h) => h is Map && h['is_premium'] == true);
+  }
+
+  @override
   Future<LeaveOutcome> leaveHousehold(String householdId) async {
     final result = await _client.rpc<dynamic>(
       'leave_household',
@@ -297,6 +311,18 @@ class HouseholdService {
 
   Future<LeaveOutcome> leaveHousehold(String householdId) =>
       _backend.leaveHousehold(householdId);
+
+  /// Best effort: premium not reaching the household right now is fixed by
+  /// the next resume (see `_syncIfSharing`), so a failure here is logged, not
+  /// surfaced. Returns false on failure.
+  Future<bool> claimPremium() async {
+    try {
+      return await _backend.claimPremium();
+    } on Object catch (error) {
+      debugPrint('claim-premium failed: $error');
+      return false;
+    }
+  }
 
   /// Redeems a hand-typed code, returning the household joined.
   Future<String> joinWithCode(String rawCode) {

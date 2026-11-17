@@ -278,12 +278,30 @@ begin
     when insufficient_privilege then null;
   end;
 
-  -- Nor evict one of B's members.
+  -- Nor evict one of B's members. There is no DELETE policy on memberships
+  -- at all (20261117000200): a direct delete matches nothing...
   delete from public.household_members
   where household_id = '22222222-0000-0000-0000-00000000000b';
   get diagnostics affected = row_count;
   if affected <> 0 then
     raise exception 'Alice removed a member of household B';
+  end if;
+
+  -- ...and the function that does remove members is the owner's alone.
+  begin
+    perform public.remove_household_member(
+      '22222222-0000-0000-0000-00000000000b',
+      'bbbbbbbb-0000-0000-0000-000000000002');
+    raise exception 'Alice removed Bob from household B';
+  exception
+    when insufficient_privilege then null;
+  end;
+
+  -- Nor read B's roster.
+  select count(*) into visible
+  from public.household_roster('22222222-0000-0000-0000-00000000000b');
+  if visible <> 0 then
+    raise exception 'Alice can read household B''s roster (% rows)', visible;
   end if;
 
   -- Invites belong to their household's owner alone.
@@ -384,13 +402,9 @@ begin
     when insufficient_privilege then null;
   end;
 
-  -- She may leave, though.
-  delete from public.household_members
-  where household_id = '11111111-0000-0000-0000-00000000000a'
-    and user_id = 'cccccccc-0000-0000-0000-000000000003';
-  get diagnostics affected = row_count;
-  if affected <> 1 then
-    raise exception 'Carol could not leave household A (% rows)', affected;
+  -- She may leave, though: through leave_household(), the only way out.
+  if public.leave_household('11111111-0000-0000-0000-00000000000a') <> 'left' then
+    raise exception 'Carol could not leave household A';
   end if;
 
   -- And having left, the shared garage is gone.
@@ -447,7 +461,17 @@ begin
     raise exception 'Alice is a member of household B';
   end if;
 
-  -- The owner may not delete their own membership and orphan the household.
+  -- The owner may not delete their own membership and orphan the household:
+  -- no DELETE policy matches, and remove_household_member() refuses self.
+  begin
+    perform public.remove_household_member(
+      '22222222-0000-0000-0000-00000000000b',
+      'bbbbbbbb-0000-0000-0000-000000000002');
+    raise exception 'The owner removed themselves with remove_household_member';
+  exception
+    when invalid_parameter_value then null;
+  end;
+
   delete from public.household_members
   where household_id = '22222222-0000-0000-0000-00000000000b'
     and user_id = 'bbbbbbbb-0000-0000-0000-000000000002';
@@ -594,6 +618,229 @@ begin
   where owner_id <> dana;
   if visible <> 0 then
     raise exception 'Dana sees % households she does not own', visible;
+  end if;
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- Leaving and removing: household E (Erin owns; Finn, Gus, Hana are members)
+-- ---------------------------------------------------------------------------
+--
+-- Covers leave_household(), remove_household_member() and
+-- household_roster() from 20261117000200, including the rules they share with
+-- delete_account_data(): ownership passes to the earliest member, the last
+-- member out deletes the household and its data, and premium paid for by
+-- whoever leaves or is removed is cleared.
+
+reset role;
+
+insert into auth.users (id, email)
+values
+  ('eeeeeeee-0000-0000-0000-000000000005', 'erin@example.com'),
+  ('ffffffff-0000-0000-0000-000000000006', 'finn@example.com'),
+  ('99999999-0000-0000-0000-000000000007', 'gus@example.com'),
+  ('88888888-0000-0000-0000-000000000008', 'hana@example.com');
+
+insert into public.profiles (id, display_name)
+values
+  ('eeeeeeee-0000-0000-0000-000000000005', 'Erin'),
+  ('ffffffff-0000-0000-0000-000000000006', 'Finn'),
+  ('99999999-0000-0000-0000-000000000007', 'Gus'),
+  ('88888888-0000-0000-0000-000000000008', null);
+
+insert into public.households (id, name, owner_id)
+values ('33333333-0000-0000-0000-00000000000e', 'Household E',
+        'eeeeeeee-0000-0000-0000-000000000005');
+
+-- Explicit join times: Gus joined before Hana, so he is the heir once Finn
+-- has gone.
+insert into public.household_members (household_id, user_id, role, joined_at)
+values
+  ('33333333-0000-0000-0000-00000000000e',
+   'ffffffff-0000-0000-0000-000000000006', 'member', now() + interval '1 min'),
+  ('33333333-0000-0000-0000-00000000000e',
+   '99999999-0000-0000-0000-000000000007', 'member', now() + interval '2 min'),
+  ('33333333-0000-0000-0000-00000000000e',
+   '88888888-0000-0000-0000-000000000008', 'member', now() + interval '3 min');
+
+insert into public.vehicles
+  (id, household_id, created_by, nickname, odometer, odometer_unit)
+values ('e0000000-0000-0000-0000-0000000000e1',
+        '33333333-0000-0000-0000-00000000000e',
+        'eeeeeeee-0000-0000-0000-000000000005', 'Erin Golf', 100, 'km');
+
+insert into public.service_records (id, vehicle_id, created_by, performed_at, type)
+values ('e0000000-0000-0000-0000-0000000000e2',
+        'e0000000-0000-0000-0000-0000000000e1',
+        'eeeeeeee-0000-0000-0000-000000000005', now(), 'oilChange');
+
+-- Hana's purchase made the household premium.
+update public.households
+set is_premium = true,
+    premium_source_user_id = '88888888-0000-0000-0000-000000000008'
+where id = '33333333-0000-0000-0000-00000000000e';
+
+-- Finn: a plain member.
+set local request.jwt.claims = '{"sub":"ffffffff-0000-0000-0000-000000000006","role":"authenticated"}';
+set local role authenticated;
+
+do $$
+declare
+  e constant uuid := '33333333-0000-0000-0000-00000000000e';
+  visible int;
+  affected int;
+  owner_name text;
+begin
+  -- The roster names his co-members, and keeps a member with no display
+  -- name rather than dropping them.
+  select count(*) into visible from public.household_roster(e);
+  if visible <> 4 then
+    raise exception 'Finn sees % roster rows, expected 4', visible;
+  end if;
+  select display_name into owner_name from public.household_roster(e)
+  where role = 'owner';
+  if owner_name is distinct from 'Erin' then
+    raise exception 'Roster owner name is %', owner_name;
+  end if;
+  select count(*) into visible from public.household_roster(e)
+  where user_id = '88888888-0000-0000-0000-000000000008' and display_name is null;
+  if visible <> 1 then
+    raise exception 'A member without a display name fell off the roster';
+  end if;
+
+  -- Not the owner: cannot remove anyone.
+  begin
+    perform public.remove_household_member(e, '99999999-0000-0000-0000-000000000007');
+    raise exception 'A plain member removed someone';
+  exception
+    when insufficient_privilege then null;
+  end;
+
+  -- The internal premium helper is not callable by clients.
+  begin
+    perform public.clear_household_premium_from(e, '88888888-0000-0000-0000-000000000008');
+    raise exception 'A client called clear_household_premium_from';
+  exception
+    when insufficient_privilege then null;
+  end;
+
+  -- A direct delete of someone's membership matches nothing.
+  delete from public.household_members
+  where household_id = e and user_id = '99999999-0000-0000-0000-000000000007';
+  get diagnostics affected = row_count;
+  if affected <> 0 then
+    raise exception 'Finn deleted Gus''s membership directly';
+  end if;
+
+  if public.leave_household(e) <> 'left' then
+    raise exception 'Finn did not simply leave';
+  end if;
+
+  -- Gone means gone.
+  select count(*) into visible from public.vehicles;
+  if visible <> 0 then
+    raise exception 'Finn still sees % vehicles after leaving', visible;
+  end if;
+  begin
+    perform public.leave_household(e);
+    raise exception 'Finn left a household he is not in';
+  exception
+    when no_data_found then null;
+  end;
+end;
+$$;
+
+-- Erin: the owner.
+reset role;
+set local request.jwt.claims = '{"sub":"eeeeeeee-0000-0000-0000-000000000005","role":"authenticated"}';
+set local role authenticated;
+
+do $$
+declare
+  e constant uuid := '33333333-0000-0000-0000-00000000000e';
+  premium boolean;
+begin
+  begin
+    perform public.remove_household_member(e, 'ffffffff-0000-0000-0000-000000000006');
+    raise exception 'Removed someone who already left';
+  exception
+    when no_data_found then null;
+  end;
+
+  -- Removing Hana, who paid, takes premium with her.
+  perform public.remove_household_member(e, '88888888-0000-0000-0000-000000000008');
+  select is_premium into premium from public.households where id = e;
+  if premium then
+    raise exception 'Household E kept premium after its payer was removed';
+  end if;
+end;
+$$;
+
+-- Now Erin is the payer; then she leaves.
+reset role;
+update public.households
+set is_premium = true,
+    premium_source_user_id = 'eeeeeeee-0000-0000-0000-000000000005'
+where id = '33333333-0000-0000-0000-00000000000e';
+set local request.jwt.claims = '{"sub":"eeeeeeee-0000-0000-0000-000000000005","role":"authenticated"}';
+set local role authenticated;
+
+do $$
+begin
+  if public.leave_household('33333333-0000-0000-0000-00000000000e') <> 'transferred' then
+    raise exception 'Erin''s leave did not transfer ownership';
+  end if;
+end;
+$$;
+
+reset role;
+
+do $$
+declare
+  e constant uuid := '33333333-0000-0000-0000-00000000000e';
+  h record;
+  gus_role text;
+begin
+  select owner_id, is_premium, premium_source_user_id into h
+  from public.households where id = e;
+  if h.owner_id <> '99999999-0000-0000-0000-000000000007' then
+    raise exception 'Ownership went to %, expected Gus', h.owner_id;
+  end if;
+  if h.is_premium or h.premium_source_user_id is not null then
+    raise exception 'Household E kept the premium Erin paid for';
+  end if;
+  select role into gus_role from public.household_members
+  where household_id = e and user_id = '99999999-0000-0000-0000-000000000007';
+  if gus_role is distinct from 'owner' then
+    raise exception 'Gus''s membership role is %', gus_role;
+  end if;
+end;
+$$;
+
+-- Gus: the last one out.
+set local request.jwt.claims = '{"sub":"99999999-0000-0000-0000-000000000007","role":"authenticated"}';
+set local role authenticated;
+
+do $$
+begin
+  if public.leave_household('33333333-0000-0000-0000-00000000000e') <> 'deleted' then
+    raise exception 'The last member''s leave did not delete the household';
+  end if;
+end;
+$$;
+
+reset role;
+
+do $$
+begin
+  if exists (select 1 from public.households
+             where id = '33333333-0000-0000-0000-00000000000e')
+    or exists (select 1 from public.vehicles
+               where id = 'e0000000-0000-0000-0000-0000000000e1')
+    or exists (select 1 from public.service_records
+               where id = 'e0000000-0000-0000-0000-0000000000e2')
+  then
+    raise exception 'Household E or its data survived its last member leaving';
   end if;
 end;
 $$;

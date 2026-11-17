@@ -74,6 +74,17 @@ class FakeHouseholdBackend implements HouseholdBackend {
     members[householdId]?.removeWhere((m) => m.userId == userId);
   }
 
+  int claimPremiumCount = 0;
+
+  /// What the server answers to claim-premium.
+  bool claimGrantsPremium = false;
+
+  @override
+  Future<bool> claimPremium() async {
+    claimPremiumCount++;
+    return claimGrantsPremium;
+  }
+
   /// Households the caller left, in order.
   final leftHouseholds = <String>[];
 

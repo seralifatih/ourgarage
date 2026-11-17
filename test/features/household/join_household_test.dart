@@ -77,6 +77,23 @@ void main() {
       expect(backend.members[_householdId], hasLength(1));
     });
 
+    test('joining extends the joiner’s own premium to the household, and '
+        'the same sync caches it', () async {
+      backend
+        ..seedInvite(householdId: _householdId, code: 'MK7NPQ')
+        ..claimGrantsPremium = true;
+      remote.householdPremium[_householdId] = true;
+
+      await join.join(
+        code: 'MK7NPQ',
+        userId: _userId,
+        choice: LocalGarageChoice.keepLocal,
+      );
+
+      expect(backend.claimPremiumCount, 1);
+      expect(await db.householdEntitlementDao.isHouseholdPremium(), isTrue);
+    });
+
     test('a hand-typed code is repaired before being sent', () async {
       backend.seedInvite(householdId: _householdId, code: 'MK7NPQ');
 

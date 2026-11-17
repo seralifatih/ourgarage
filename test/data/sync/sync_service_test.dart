@@ -6,6 +6,8 @@ import 'package:ourgarage/data/models/service_type.dart';
 import 'package:ourgarage/data/sync/sync_payloads.dart';
 import 'package:ourgarage/data/sync/sync_service.dart';
 
+import 'package:ourgarage/services/remote_garage.dart';
+
 import '../../support/fake_remote_garage.dart';
 
 const _householdId = 'household-1';
@@ -390,6 +392,66 @@ void main() {
       expect(back.id.value, 'record-1');
       expect(back.cost.value, 99.5);
       expect(back.updatedAt.value, _t0);
+    });
+  });
+
+  group('household premium', () {
+    test('a sync caches the household premium flag for every member', () async {
+      remote.householdPremium[_householdId] = true;
+
+      await sync.sync(householdId: _householdId);
+
+      expect(await db.householdEntitlementDao.isHouseholdPremium(), isTrue);
+    });
+
+    test('a lapsed household premium is cached as not premium', () async {
+      await db.householdEntitlementDao.cacheEntitlement(isPremium: true);
+      remote.householdPremium[_householdId] = false;
+
+      await sync.sync(householdId: _householdId);
+
+      expect(await db.householdEntitlementDao.isHouseholdPremium(), isFalse);
+    });
+
+    test('a failed read keeps the previous value', () async {
+      await db.householdEntitlementDao.cacheEntitlement(isPremium: true);
+      remote.failOn = 'fetchHouseholdPremium';
+
+      await sync.sync(householdId: _householdId);
+
+      expect(await db.householdEntitlementDao.isHouseholdPremium(), isTrue);
+    });
+  });
+
+  group('householdPremiumFromRow', () {
+    final now = DateTime.utc(2026, 11, 17);
+
+    test('honours the flag and the expiry', () {
+      expect(householdPremiumFromRow(null, now), isFalse);
+      expect(householdPremiumFromRow({'is_premium': false}, now), isFalse);
+      expect(
+        householdPremiumFromRow({
+          'is_premium': true,
+          'premium_expires_at': null,
+        }, now),
+        isTrue,
+        reason: 'lifetime',
+      );
+      expect(
+        householdPremiumFromRow({
+          'is_premium': true,
+          'premium_expires_at': '2026-12-01T00:00:00Z',
+        }, now),
+        isTrue,
+      );
+      expect(
+        householdPremiumFromRow({
+          'is_premium': true,
+          'premium_expires_at': '2026-11-01T00:00:00Z',
+        }, now),
+        isFalse,
+        reason: 'expired, even if the webhook has not cleared the flag yet',
+      );
     });
   });
 }
