@@ -7,6 +7,7 @@ import '../../data/local/database.dart';
 import '../../data/repositories/premium_status_provider.dart';
 import '../../data/repositories/providers.dart';
 import '../../data/repositories/stream_providers.dart';
+import '../../services/auth_service.dart';
 import '../../services/auth_service_provider.dart';
 import '../household/widgets/household_account_sheet.dart';
 import '../household/widgets/household_migration_dialog.dart';
@@ -166,9 +167,19 @@ class _VehicleDetailView extends ConsumerWidget {
     final auth = ref.read(authServiceProvider);
     final messenger = ScaffoldMessenger.of(context);
 
-    final signIn = await auth.signInIfNeeded(
-      () => HouseholdAccountSheet.show(context),
-    );
+    final SignInResult? signIn;
+    try {
+      signIn = await auth.signInIfNeeded(
+        () => HouseholdAccountSheet.show(context),
+      );
+    } on HouseholdSetupException catch (error) {
+      // Already signed in, so no sheet was shown to report this — e.g. an
+      // earlier attempt signed in but could not create the household.
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(error.message)));
+      return;
+    }
     // Dismissed, or sign-in failed and was reported inside the sheet.
     if (signIn == null || !context.mounted) return;
 

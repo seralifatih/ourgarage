@@ -503,4 +503,99 @@ begin
 end;
 $$;
 
+-- ---------------------------------------------------------------------------
+-- Become Dana: a brand-new user creating her first household
+-- ---------------------------------------------------------------------------
+--
+-- Every household above was seeded as the superuser, which bypasses RLS. This
+-- is the path a real client takes, as `authenticated`, and it is the one that
+-- broke in production (20261117000100_household_creation.sql): INSERT ...
+-- RETURNING requires the new row to pass the SELECT policy before the owner
+-- membership trigger has run.
+
+reset role;
+
+insert into auth.users (id, email)
+values ('dddddddd-0000-0000-0000-000000000004', 'dana@example.com');
+
+-- The app creates the profile itself, as the user; done the same way here.
+set local request.jwt.claims = '{"sub":"dddddddd-0000-0000-0000-000000000004","role":"authenticated"}';
+set local role authenticated;
+
+insert into public.profiles (id, display_name)
+values ('dddddddd-0000-0000-0000-000000000004', 'Dana');
+
+do $$
+declare
+  dana constant uuid := 'dddddddd-0000-0000-0000-000000000004';
+  hid uuid;
+  visible int;
+  member_role text;
+  stored_name text;
+begin
+  -- Exactly what builds up to 1.0.8+13 send: POST households?select=id with
+  -- {name, owner_id}, i.e. INSERT ... RETURNING id.
+  insert into public.households (name, owner_id)
+  values ('Dana''s Garage', dana)
+  returning id into hid;
+
+  select role into member_role from public.household_members
+  where household_id = hid and user_id = dana;
+  if member_role is distinct from 'owner' then
+    raise exception 'Direct insert: owner membership is %', member_role;
+  end if;
+
+  select count(*) into visible from public.households where id = hid;
+  if visible <> 1 then
+    raise exception 'Direct insert: Dana sees % rows of her own household', visible;
+  end if;
+
+  -- The RPC newer builds use.
+  hid := public.create_household('  Dana''s Second Garage  ');
+
+  select name into stored_name from public.households where id = hid;
+  if stored_name is distinct from 'Dana''s Second Garage' then
+    raise exception 'create_household: stored name is %', stored_name;
+  end if;
+
+  select role into member_role from public.household_members
+  where household_id = hid and user_id = dana;
+  if member_role is distinct from 'owner' then
+    raise exception 'create_household: owner membership is %', member_role;
+  end if;
+
+  begin
+    perform public.create_household('   ');
+    raise exception 'create_household accepted a blank name';
+  exception
+    when invalid_parameter_value then null;
+  end;
+
+  -- A household cannot be born premium.
+  begin
+    insert into public.households (name, owner_id, is_premium)
+    values ('Free premium', dana, true);
+    raise exception 'A client created a household with is_premium = true';
+  exception
+    when insufficient_privilege then null;
+  end;
+
+  -- Nor owned by someone else.
+  begin
+    insert into public.households (name, owner_id)
+    values ('Not mine', 'aaaaaaaa-0000-0000-0000-000000000001');
+    raise exception 'Dana created a household owned by Alice';
+  exception
+    when insufficient_privilege then null;
+  end;
+
+  -- Owning households of her own grants nothing in anyone else's.
+  select count(*) into visible from public.households
+  where owner_id <> dana;
+  if visible <> 0 then
+    raise exception 'Dana sees % households she does not own', visible;
+  end if;
+end;
+$$;
+
 rollback;

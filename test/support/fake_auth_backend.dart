@@ -17,6 +17,7 @@ class FakeAuthBackend implements AuthBackend {
     this.cancels = false,
     this.appleError,
     this.signInError,
+    this.householdError,
     bool alreadySignedIn = false,
   }) {
     // Models a session Supabase already restored before this backend was
@@ -41,6 +42,10 @@ class FakeAuthBackend implements AuthBackend {
 
   /// Thrown from the Supabase exchange when set.
   final Object? signInError;
+
+  /// Thrown from [createHousehold] when set — e.g. the RLS rejection that
+  /// broke 1.0.8+13.
+  final Object? householdError;
 
   String? _currentUserId;
 
@@ -168,6 +173,7 @@ class FakeAuthBackend implements AuthBackend {
     required String userId,
     required String name,
   }) async {
+    if (householdError != null) throw householdError!;
     createdHouseholds[userId] = name;
     return 'household-for-$userId';
   }
