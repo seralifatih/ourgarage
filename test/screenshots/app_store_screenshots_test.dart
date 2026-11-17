@@ -5,15 +5,18 @@
 //
 //   flutter test test/screenshots --dart-define=SCREENSHOTS=true
 //
-// or `tool/generate_screenshots.ps1`.
+// or `tool/generate_screenshots.ps1`. Add
+// `--dart-define=SCREENSHOT_SIZE=1206x2622` for the 6.3" set, written to
+// `screenshots/1206x2622/`. Every file is an RGB PNG with no alpha channel.
 //
 // Each shot is made in two passes. First the real app (real router, real
 // screens, DemoData in an in-memory Drift database, fake RevenueCat / auth /
 // notifications — nothing touches a real service) renders full-screen at the
-// iPhone 6.7" logical size and is captured. Then that capture is placed in the
-// green marketing template (title, subtitle, iPhone frame) and the template is
-// captured at 1290x2796.
+// configured iPhone logical size and is captured. Then that capture is placed
+// in the green marketing template (title, subtitle, iPhone frame) and the
+// template is captured at the configured pixel size (1290x2796 by default).
 import 'dart:io';
+import 'dart:typed_data' show BytesBuilder;
 import 'dart:ui' as ui;
 
 import 'package:drift/drift.dart' show Value;
@@ -37,15 +40,34 @@ import '../support/fake_purchases_api.dart';
 
 const _enabled = bool.fromEnvironment('SCREENSHOTS');
 
-/// iPhone 6.7" (15 Pro Max): 430x932 points at 3x = 1290x2796 pixels.
-const _logicalSize = Size(430, 932);
+/// Output size in pixels, `WIDTHxHEIGHT`, at 3x. The default is iPhone 6.7"
+/// (430x932 points); `--dart-define=SCREENSHOT_SIZE=1206x2622` gives iPhone
+/// 6.3" (402x874 points).
+const _sizeSpec = String.fromEnvironment(
+  'SCREENSHOT_SIZE',
+  defaultValue: '1290x2796',
+);
 const _pixelRatio = 3.0;
+
+final _pixelSize = () {
+  final parts = _sizeSpec.split('x').map(int.parse).toList();
+  return (width: parts[0], height: parts[1]);
+}();
+
+final _logicalSize = Size(
+  _pixelSize.width / _pixelRatio,
+  _pixelSize.height / _pixelRatio,
+);
+
+/// The default size keeps its original location; other sizes get their own
+/// folder.
+const _outputDir = _sizeSpec == '1290x2796'
+    ? 'screenshots'
+    : 'screenshots/$_sizeSpec';
 
 /// iPhone safe-area insets, in points.
 const _safeTop = 59.0;
 const _safeBottom = 34.0;
-
-const _outputDir = 'screenshots';
 
 const _crvId = '${DemoData.idPrefix}vehicle-crv';
 const _civicId = '${DemoData.idPrefix}vehicle-civic';
@@ -245,11 +267,87 @@ Future<ui.Image> _capture(WidgetTester tester, GlobalKey key) async {
   return image!;
 }
 
+/// Writes [image] as an 8-bit RGB PNG — no alpha channel, which App Store
+/// Connect rejects in screenshots. The engine's own PNG encoder always
+/// writes RGBA, so this encodes by hand: one IHDR, one zlib IDAT, IEND.
 Future<void> _writePng(ui.Image image, String path) async {
-  final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+  final width = image.width;
+  final height = image.height;
+  if (width != _pixelSize.width || height != _pixelSize.height) {
+    throw StateError(
+      'Rendered ${width}x$height, expected '
+      '${_pixelSize.width}x${_pixelSize.height}',
+    );
+  }
+
+  final rgba = (await image.toByteData(
+    format: ui.ImageByteFormat.rawStraightRgba,
+  ))!.buffer.asUint8List();
+
+  // Each scanline: filter byte 0 (none), then R,G,B per pixel.
+  final raw = Uint8List(height * (1 + width * 3));
+  var out = 0;
+  for (var y = 0; y < height; y++) {
+    raw[out++] = 0;
+    for (var x = 0; x < width; x++) {
+      final i = (y * width + x) * 4;
+      // Dropping alpha is only lossless if the frame is fully opaque, which
+      // the template's full-bleed background guarantees. Fail loudly if not.
+      if (rgba[i + 3] != 255) {
+        throw StateError('Transparent pixel at ($x, $y)');
+      }
+      raw[out++] = rgba[i];
+      raw[out++] = rgba[i + 1];
+      raw[out++] = rgba[i + 2];
+    }
+  }
+
+  final header = ByteData(13)
+    ..setUint32(0, width)
+    ..setUint32(4, height)
+    ..setUint8(8, 8) // bit depth
+    ..setUint8(9, 2) // colour type 2: truecolour RGB
+    ..setUint8(10, 0) // compression
+    ..setUint8(11, 0) // filter
+    ..setUint8(12, 0); // interlace
+
+  final png = BytesBuilder(copy: false)
+    ..add(const [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
+    ..add(_pngChunk('IHDR', header.buffer.asUint8List()))
+    ..add(_pngChunk('IDAT', ZLibEncoder(level: 9).convert(raw)))
+    ..add(_pngChunk('IEND', const []));
+
   final file = File(path);
   await file.parent.create(recursive: true);
-  await file.writeAsBytes(bytes!.buffer.asUint8List());
+  await file.writeAsBytes(png.takeBytes());
+}
+
+List<int> _pngChunk(String type, List<int> data) {
+  final typeBytes = type.codeUnits;
+  final length = ByteData(4)..setUint32(0, data.length);
+  final crc = ByteData(4)..setUint32(0, _crc32([...typeBytes, ...data]));
+  return [
+    ...length.buffer.asUint8List(),
+    ...typeBytes,
+    ...data,
+    ...crc.buffer.asUint8List(),
+  ];
+}
+
+final _crcTable = List<int>.generate(256, (n) {
+  var c = n;
+  for (var k = 0; k < 8; k++) {
+    c = (c & 1) != 0 ? 0xEDB88320 ^ (c >> 1) : c >> 1;
+  }
+  return c;
+});
+
+int _crc32(List<int> bytes) {
+  var crc = 0xFFFFFFFF;
+  for (final b in bytes) {
+    crc = _crcTable[(crc ^ b) & 0xFF] ^ (crc >> 8);
+  }
+  return crc ^ 0xFFFFFFFF;
 }
 
 Future<void> _addRule(
@@ -404,9 +502,10 @@ class _Template extends StatelessWidget {
                   ],
                 ),
               ),
-              // Fixed position across all shots, fully inside the canvas.
+              // Same position across all shots, fully inside the canvas.
+              // Tuned at 932pt tall and scaled for other heights.
               Positioned(
-                top: 206,
+                top: 206 * _logicalSize.height / 932,
                 left: (_logicalSize.width - screenW) / 2 - _bezel,
                 child: Container(
                   padding: const EdgeInsets.all(_bezel),
