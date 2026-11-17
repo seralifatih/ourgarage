@@ -48,6 +48,17 @@ app.*.map.json
 # --dart-define-from-file. Never commit real project credentials.
 dart_defines.json
 
+# Environment files with credentials. None exist in this repo yet; ignored so
+# one can't be committed by accident. A checked-in template stays allowed.
+.env
+.env.*
+!.env.example
+
+# App Review invite codes for the demo household (tool/create_review_household.py).
+# They let anyone join that household, so they stay local and go only into
+# App Store Connect.
+store/*.local.*
+
 # Local Supabase CLI state (project link, cached versions) from
 # `supabase link`/`supabase functions deploy`. Machine-specific, not shared.
 supabase/.temp/

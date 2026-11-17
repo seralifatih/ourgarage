@@ -26,6 +26,15 @@ class FakeRemoteGarage implements RemoteGarage {
 
   int deleteHouseholdDataCount = 0;
 
+  /// What `households.is_premium` says, per household.
+  final householdPremium = <String, bool>{};
+
+  @override
+  Future<bool> fetchHouseholdPremium(String householdId) async {
+    _maybeFail('fetchHouseholdPremium');
+    return householdPremium[householdId] ?? false;
+  }
+
   void _maybeFail(String call) {
     if (offline) {
       throw StateError('Offline: $call');

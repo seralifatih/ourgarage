@@ -97,12 +97,29 @@ class SyncService {
       // Pull regardless: a push that failed on a poisoned row should not stop
       // this device from seeing what everyone else did.
       final pulled = await _pull(householdId);
+      await refreshHouseholdPremium(householdId);
 
       final pending = await _db.syncQueueDao.pending(limit: 1);
       _setStatus(pending.isEmpty ? SyncStatus.idle : SyncStatus.pendingOffline);
       return pushed && pulled;
     } finally {
       _running = false;
+    }
+  }
+
+  /// Caches whether the household has premium, so every member — not only
+  /// the one who paid — gets premium UI. The cache only decides what to draw;
+  /// the server re-checks anything that matters. A failed read keeps the
+  /// previous value rather than flipping premium off on a bad connection.
+  Future<void> refreshHouseholdPremium(String householdId) async {
+    try {
+      final isPremium = await _remote.fetchHouseholdPremium(householdId);
+      await _db.householdEntitlementDao.cacheEntitlement(
+        isPremium: isPremium,
+        householdId: householdId,
+      );
+    } on Object catch (error) {
+      debugPrint('Household premium refresh failed: $error');
     }
   }
 

@@ -96,6 +96,10 @@ class JoinHouseholdService {
       uploaded = true;
     }
 
+    // A joiner who already bought premium extends it to the household they
+    // joined. Before the sync, so the pull below caches the result.
+    await _households.claimPremium();
+
     // A full pull: lastPulledAt is null for a device that has never synced
     // this household, so this fetches everything the household already has.
     await _sync.sync(householdId: householdId);

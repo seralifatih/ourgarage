@@ -1,10 +1,10 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/local/database.dart';
 import '../../data/repositories/database_holder.dart';
 import '../../services/auth_service.dart';
 import '../../services/auth_service_provider.dart';
+import '../household/forget_household.dart';
 import '../household/household_migration_provider.dart';
 import '../household/household_service.dart';
 
@@ -100,20 +100,7 @@ class AccountDeletionService {
     }
   }
 
-  Future<void> _forgetHousehold() async {
-    for (final step in <(String, Future<void> Function())>[
-      ('detach vehicles', () => db.vehicleDao.detachAllFromHousehold()),
-      ('clear sync queue', () => db.syncQueueDao.clear()),
-      ('reset pull cursor', () => db.syncQueueDao.resetLastPulledAt()),
-      ('clear entitlement cache', () => db.householdEntitlementDao.clear()),
-    ]) {
-      try {
-        await step.$2();
-      } catch (error) {
-        debugPrint('Account deletion cleanup "${step.$1}" failed: $error');
-      }
-    }
-  }
+  Future<void> _forgetHousehold() => forgetHouseholdLocally(db);
 }
 
 final accountDeletionServiceProvider = Provider<AccountDeletionService>(

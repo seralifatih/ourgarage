@@ -6,6 +6,7 @@ class AppRoutes {
   static const String settings = '/settings';
   static const String paywall = '/paywall';
   static const String joinHousehold = '/settings/join-household';
+  static const String household = '/settings/household';
 
   /// Where the odometer nudge lands: one field per vehicle, one Save.
   static const String updateOdometers = '/update-odometers';

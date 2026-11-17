@@ -143,6 +143,63 @@ void main() {
     });
   });
 
+  group('household setup failure', () {
+    test(
+      'a household failure after sign-in is reported as household setup, '
+      'not as a failed sign-in',
+      () async {
+        final backend = FakeAuthBackend(
+          householdError: Exception('42501 new row violates RLS'),
+        );
+        addTearDown(backend.dispose);
+        final service = AuthService(backend);
+
+        await expectLater(
+          service.signInWithApple(),
+          throwsA(isA<HouseholdSetupException>()),
+        );
+        expect(
+          service.isSignedIn,
+          isTrue,
+          reason: 'the session is real; only the household is missing',
+        );
+      },
+    );
+
+    test('the next attempt on the same session finishes the setup', () async {
+      final failing = FakeAuthBackend(householdError: Exception('offline'));
+      addTearDown(failing.dispose);
+      await expectLater(
+        AuthService(failing).signInWithApple(),
+        throwsA(isA<HouseholdSetupException>()),
+      );
+
+      final recovered = FakeAuthBackend(alreadySignedIn: true);
+      addTearDown(recovered.dispose);
+      final result = await AuthService(
+        recovered,
+      ).signInIfNeeded(() async => fail('already signed in; no sheet'));
+
+      expect(result?.householdWasCreated, isTrue);
+      expect(recovered.createdHouseholds['user-1'], isNotNull);
+    });
+
+    test('the already-signed-in path surfaces it too', () async {
+      final backend = FakeAuthBackend(
+        alreadySignedIn: true,
+        householdError: Exception('42501'),
+      );
+      addTearDown(backend.dispose);
+
+      await expectLater(
+        AuthService(
+          backend,
+        ).signInIfNeeded(() async => fail('already signed in; no sheet')),
+        throwsA(isA<HouseholdSetupException>()),
+      );
+    });
+  });
+
   group('nonce', () {
     test(
       'the raw nonce goes to Supabase, for it to hash and compare',

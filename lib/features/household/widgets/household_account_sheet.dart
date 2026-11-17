@@ -118,6 +118,12 @@ class _HouseholdAccountSheetState<T>
       }
 
       Navigator.of(context).pop(result);
+    } on HouseholdSetupException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _signingIn = false;
+        _error = error.message;
+      });
     } on AuthException catch (error) {
       if (!mounted) return;
       setState(() {

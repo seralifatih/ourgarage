@@ -69,6 +69,25 @@ class HouseholdMember {
   final String? displayName;
 
   bool get isOwner => role == 'owner';
+
+  /// What to call this member in the roster.
+  String get label {
+    final name = displayName?.trim();
+    return (name == null || name.isEmpty) ? 'Household member' : name;
+  }
+}
+
+/// What leaving did to the household, as decided by `leave_household()`.
+enum LeaveOutcome {
+  /// The caller was the only member: the household and its shared data are
+  /// gone from the server.
+  deleted,
+
+  /// The caller owned it: the member who joined first is now the owner.
+  transferred,
+
+  /// The caller was a member; the household carries on without them.
+  left,
 }
 
 /// Invites and membership, from the owner's and the joiner's side.
@@ -95,6 +114,14 @@ abstract interface class HouseholdBackend {
     required String householdId,
     required String userId,
   });
+
+  /// Removes the caller from [householdId]. See [LeaveOutcome].
+  Future<LeaveOutcome> leaveHousehold(String householdId);
+
+  /// Asks the server to check the caller's RevenueCat entitlement and, if it
+  /// is active, make their household premium (`claim-premium`). Returns
+  /// whether any of their households is premium afterwards.
+  Future<bool> claimPremium();
 
   /// Redeems [code], returning the household joined.
   Future<String> acceptInvite(String code);
@@ -156,15 +183,13 @@ class SupabaseHouseholdBackend implements HouseholdBackend {
 
   @override
   Future<List<HouseholdMember>> listMembers(String householdId) async {
-    // profiles is readable only for your own row, so a member's display name
-    // is not fetchable here. The roster shows roles and join dates; putting
-    // names on it needs a view or a definer function, which is a deliberate
-    // gap rather than an oversight.
-    final rows = await _client
-        .from('household_members')
-        .select()
-        .eq('household_id', householdId)
-        .order('joined_at');
+    // profiles is readable only for your own row, so names come through
+    // `household_roster()`, which exposes display_name (never the email) for
+    // people in a household with the caller, oldest member first.
+    final rows = await _client.rpc<dynamic>(
+      'household_roster',
+      params: {'hid': householdId},
+    );
 
     return [
       for (final row in rows as List)
@@ -172,6 +197,7 @@ class SupabaseHouseholdBackend implements HouseholdBackend {
           userId: (row as Map)['user_id'] as String,
           role: row['role'] as String,
           joinedAt: DateTime.parse(row['joined_at'] as String).toLocal(),
+          displayName: row['display_name'] as String?,
         ),
     ];
   }
@@ -181,15 +207,31 @@ class SupabaseHouseholdBackend implements HouseholdBackend {
     required String householdId,
     required String userId,
   }) async {
-    // Removing a member deletes only the membership row. Their vehicles stay
-    // with the household — the data belongs to the garage, not the person, and
-    // cascading a delete here would destroy shared history because somebody
-    // left.
-    await _client
-        .from('household_members')
-        .delete()
-        .eq('household_id', householdId)
-        .eq('user_id', userId);
+    // Removes only the membership (and premium they paid for). Their vehicles
+    // stay with the household — the data belongs to the garage, not the
+    // person. An RPC, not a DELETE: see the household-management migration.
+    await _client.rpc<void>(
+      'remove_household_member',
+      params: {'hid': householdId, 'member': userId},
+    );
+  }
+
+  @override
+  Future<bool> claimPremium() async {
+    final response = await _client.functions.invoke('claim-premium');
+    final data = response.data;
+    final households = data is Map ? data['households'] : null;
+    return households is List &&
+        households.any((h) => h is Map && h['is_premium'] == true);
+  }
+
+  @override
+  Future<LeaveOutcome> leaveHousehold(String householdId) async {
+    final result = await _client.rpc<dynamic>(
+      'leave_household',
+      params: {'hid': householdId},
+    );
+    return LeaveOutcome.values.byName(result as String);
   }
 
   @override
@@ -265,6 +307,21 @@ class HouseholdService {
     required String userId,
   }) {
     return _backend.removeMember(householdId: householdId, userId: userId);
+  }
+
+  Future<LeaveOutcome> leaveHousehold(String householdId) =>
+      _backend.leaveHousehold(householdId);
+
+  /// Best effort: premium not reaching the household right now is fixed by
+  /// the next resume (see `_syncIfSharing`), so a failure here is logged, not
+  /// surfaced. Returns false on failure.
+  Future<bool> claimPremium() async {
+    try {
+      return await _backend.claimPremium();
+    } on Object catch (error) {
+      debugPrint('claim-premium failed: $error');
+      return false;
+    }
   }
 
   /// Redeems a hand-typed code, returning the household joined.

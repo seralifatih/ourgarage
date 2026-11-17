@@ -302,6 +302,10 @@ class _RollbackAlsoFails implements RemoteGarage {
   final FakeRemoteGarage _inner;
 
   @override
+  Future<bool> fetchHouseholdPremium(String householdId) =>
+      _inner.fetchHouseholdPremium(householdId);
+
+  @override
   Future<void> upsertVehicles(List<Map<String, dynamic>> rows) =>
       _inner.upsertVehicles(rows);
 

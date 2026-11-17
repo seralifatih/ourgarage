@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,7 +9,11 @@ import '../../data/local/database.dart';
 import '../../data/repositories/premium_status_provider.dart';
 import '../../data/repositories/providers.dart';
 import '../../data/repositories/stream_providers.dart';
+import '../../data/sync/sync_providers.dart';
+import '../../services/auth_service.dart';
 import '../../services/auth_service_provider.dart';
+import '../household/household_migration_provider.dart';
+import '../household/household_premium_claim.dart';
 import '../household/widgets/household_account_sheet.dart';
 import '../household/widgets/household_migration_dialog.dart';
 import 'vehicle_detail_providers.dart';
@@ -166,9 +172,19 @@ class _VehicleDetailView extends ConsumerWidget {
     final auth = ref.read(authServiceProvider);
     final messenger = ScaffoldMessenger.of(context);
 
-    final signIn = await auth.signInIfNeeded(
-      () => HouseholdAccountSheet.show(context),
-    );
+    final SignInResult? signIn;
+    try {
+      signIn = await auth.signInIfNeeded(
+        () => HouseholdAccountSheet.show(context),
+      );
+    } on HouseholdSetupException catch (error) {
+      // Already signed in, so no sheet was shown to report this — e.g. an
+      // earlier attempt signed in but could not create the household.
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(error.message)));
+      return;
+    }
     // Dismissed, or sign-in failed and was reported inside the sheet.
     if (signIn == null || !context.mounted) return;
 
@@ -181,11 +197,22 @@ class _VehicleDetailView extends ConsumerWidget {
     );
     if (!uploaded || !context.mounted) return;
 
-    // Signed in, household created, garage uploaded. Issuing an invite code
-    // against `accept_household_invite()` is the next slice of this feature.
-    messenger
-      ..hideCurrentSnackBar()
-      ..showSnackBar(const SnackBar(content: Text('Invites are coming soon')));
+    // The purchase that got them past the paywall was made before this
+    // household existed, so nothing has marked it premium yet. Not awaited:
+    // the owner is premium either way, and resume retries if this races
+    // RevenueCat linking the purchase to the new account.
+    unawaited(
+      claimHouseholdPremium(
+        households: ref.read(householdServiceProvider),
+        sync: ref.read(syncServiceProvider),
+        householdId: signIn.householdId,
+      ),
+    );
+
+    // Signed in, household created, garage uploaded: inviting someone is the
+    // whole point of having got here, so go straight to where that happens.
+    ref.invalidate(currentHouseholdIdProvider);
+    context.push(AppRoutes.household);
   }
 
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {

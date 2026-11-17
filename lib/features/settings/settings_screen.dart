@@ -295,14 +295,14 @@ class _ExportSectionState extends ConsumerState<_ExportSection> {
   }
 }
 
-/// "Join a household" — the second and only other trigger for auth, alongside
-/// "Share with household" on a vehicle.
+/// "Household" for someone in one; otherwise "Join a household" — the second
+/// and only other trigger for auth, alongside "Share with household" on a
+/// vehicle.
 ///
-/// Shown to anyone not already in a household, signed in or not: a signed-out
-/// user can join (they'll be asked to sign in as part of it), and a signed-in
-/// user who never shared their own garage has no household yet either. Once
-/// they're in one, the row has nothing left to do, so it disappears rather
-/// than sitting there as a dead tap target.
+/// Join is shown to anyone not already in a household, signed in or not: a
+/// signed-out user can join (they'll be asked to sign in as part of it), and a
+/// signed-in user who never shared their own garage has no household yet
+/// either. Once they're in one, the row becomes the way to manage it.
 class _HouseholdSection extends ConsumerWidget {
   const _HouseholdSection();
 
@@ -315,7 +315,14 @@ class _HouseholdSection extends ConsumerWidget {
     // finds out the real state, which is far better than a row that
     // disappears and reappears as connectivity comes and goes.
     final alreadyInHousehold = householdId.asData?.value != null;
-    if (alreadyInHousehold) return const SizedBox.shrink();
+    if (alreadyInHousehold) {
+      return ListTile(
+        title: const Text('Household'),
+        subtitle: const Text('Invite people, see members, or leave'),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => context.push(AppRoutes.household),
+      );
+    }
 
     return ListTile(
       title: const Text('Join a household'),

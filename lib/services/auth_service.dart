@@ -26,6 +26,25 @@ class AuthException implements Exception {
   String toString() => 'AuthException: $message';
 }
 
+/// Signing in worked, but creating the user's profile or household did not.
+///
+/// Kept apart from [AuthException] so the UI does not tell someone who is in
+/// fact signed in that sign-in failed. The session stays; retrying finishes
+/// the setup, since [AuthService] bootstraps idempotently.
+class HouseholdSetupException implements Exception {
+  const HouseholdSetupException(this.cause);
+
+  /// The underlying error, for logs. Never shown to the user.
+  final Object cause;
+
+  String get message =>
+      "You're signed in, but your household couldn't be set up. "
+      'Check your connection and try again.';
+
+  @override
+  String toString() => 'HouseholdSetupException: $cause';
+}
+
 /// The stored session can't be used: it was revoked, or the account behind it
 /// no longer exists (for example, a deletion whose response never arrived).
 /// The local session has already been cleared when this is thrown.
@@ -91,7 +110,9 @@ abstract interface class AuthBackend {
   /// Creates a household owned by [userId], returning its id.
   ///
   /// The membership row is created by a database trigger, not here — see
-  /// `add_owner_membership()` in the sharing-layer migration.
+  /// `add_owner_membership()` in the sharing-layer migration. On the server
+  /// the owner is always the caller; [userId] is for implementations that
+  /// need it (the test fake).
   Future<String> createHousehold({
     required String userId,
     required String name,
@@ -326,6 +347,10 @@ class SupabaseAuthBackend implements AuthBackend {
         .from('household_members')
         .select('household_id')
         .eq('user_id', userId)
+        // Oldest first, so a user who somehow ended up in two households
+        // (e.g. a create_household retry after a lost response) always gets
+        // the same one back.
+        .order('joined_at')
         .limit(1)
         .maybeSingle();
     return row?['household_id'] as String?;
@@ -336,12 +361,15 @@ class SupabaseAuthBackend implements AuthBackend {
     required String userId,
     required String name,
   }) async {
-    final row = await _client
-        .from('households')
-        .insert({'name': name, 'owner_id': userId})
-        .select('id')
-        .single();
-    return row['id'] as String;
+    // An RPC rather than `insert().select()`: the server takes the owner from
+    // the JWT and creates the owner membership in the same statement. See
+    // 20261117000100_household_creation.sql for why the plain insert failed
+    // under RLS in builds up to 1.0.8+13.
+    final id = await _client.rpc<String>(
+      'create_household',
+      params: {'household_name': name},
+    );
+    return id;
   }
 }
 
@@ -481,7 +509,25 @@ class AuthService {
   /// writes failed (offline, server error) leaves a valid session with no
   /// profile, and the next attempt has to be able to finish the job rather
   /// than collide with what already landed.
+  ///
+  /// Any failure here surfaces as [HouseholdSetupException]: the user is
+  /// signed in by this point, so "could not sign in" would be wrong.
   Future<SignInResult> _bootstrap({
+    required String userId,
+    required String? displayName,
+  }) async {
+    try {
+      return await _createProfileAndHousehold(
+        userId: userId,
+        displayName: displayName,
+      );
+    } catch (error) {
+      debugPrint('Household setup failed: $error');
+      throw HouseholdSetupException(error);
+    }
+  }
+
+  Future<SignInResult> _createProfileAndHousehold({
     required String userId,
     required String? displayName,
   }) async {

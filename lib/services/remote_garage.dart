@@ -35,6 +35,11 @@ abstract interface class RemoteGarage {
   /// `on delete restrict`, so deleting vehicles first would be rejected by the
   /// database and leave the rollback half-done.
   Future<void> deleteHouseholdData(String householdId);
+
+  /// Whether [householdId] has premium right now: `households.is_premium`,
+  /// honouring `premium_expires_at`. Written only server-side (the RevenueCat
+  /// webhook and `claim-premium`); readable by every member.
+  Future<bool> fetchHouseholdPremium(String householdId);
 }
 
 /// [RemoteGarage] backed by Supabase.
@@ -42,6 +47,16 @@ class SupabaseRemoteGarage implements RemoteGarage {
   const SupabaseRemoteGarage();
 
   SupabaseClient get _client => Supabase.instance.client;
+
+  @override
+  Future<bool> fetchHouseholdPremium(String householdId) async {
+    final row = await _client
+        .from('households')
+        .select('is_premium, premium_expires_at')
+        .eq('id', householdId)
+        .maybeSingle();
+    return householdPremiumFromRow(row, DateTime.now());
+  }
 
   @override
   Future<void> upsertVehicles(List<Map<String, dynamic>> rows) async {
@@ -136,4 +151,14 @@ class SupabaseRemoteGarage implements RemoteGarage {
 
     await _client.from('vehicles').delete().eq('household_id', householdId);
   }
+}
+
+/// Reads a `households` row's premium columns. An expiry in the past means
+/// not premium even if the flag is still set — the webhook's EXPIRATION may
+/// not have arrived yet, and showing premium past its end is the worse error.
+bool householdPremiumFromRow(Map<String, dynamic>? row, DateTime now) {
+  if (row == null || row['is_premium'] != true) return false;
+  final expires = row['premium_expires_at'] as String?;
+  if (expires == null) return true;
+  return DateTime.parse(expires).isAfter(now);
 }
