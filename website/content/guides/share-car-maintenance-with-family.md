@@ -4,7 +4,7 @@ description: "When several people drive one car, maintenance slips. How to split
 publish_date: 2026-11-23
 keywords: ["sharing car maintenance with family", "shared car maintenance log", "family car maintenance tracker", "household car maintenance"]
 related: ["car-service-records-for-resale", "car-maintenance-schedule-by-mileage", "road-trip-car-checklist"]
-cta_topic: "the whole household"
+cta_topic: "the family car"
 faq:
   - q: "What's the simplest way to share a car's maintenance history?"
     a: "Keep one record that everyone can see and add to, rather than separate notes on separate phones. That can be a shared spreadsheet, a shared note or an app with household sharing, as long as everyone uses the same one."
@@ -92,6 +92,6 @@ If several people will drive on a trip, do the pre-trip checks together or agree
 
 ## How OurGarage handles this
 
-We built OurGarage for exactly this situation. Each household shares one garage: the same cars, the same service history and the same reminders on everyone's phone. When one person logs an oil change, it shows up for everyone. You invite people with a one-time code, and sign-in uses Sign in with Apple only, at the moment you choose to share.
+We're building OurGarage for exactly this situation. Household sharing, which is coming in an upcoming update, gives a household one garage: the same cars, the same service history and the same reminders on everyone's phone, so when one person logs an oil change, it shows up for everyone. Until it arrives, OurGarage keeps the record and reminders on one phone, and the person who owns each car can keep it current.
 
-The free version covers one car with unlimited records and reminders on one phone. Household sharing and additional cars are part of Premium, and one purchase covers the whole household, so nobody else has to pay.
+The free version covers one car with unlimited records and reminders. Premium adds more cars, cost totals and export.

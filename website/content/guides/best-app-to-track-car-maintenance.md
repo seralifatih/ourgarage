@@ -9,12 +9,12 @@ faq:
   - q: "Is there a free app to track car maintenance?"
     a: "Yes. CARFAX Car Care is free, and Drivvo, Fuelly and Simply Auto are free to download with paid upgrades. OurGarage is free for one car. Your phone's built-in Reminders or Calendar app also works for date-based reminders."
   - q: "Which car maintenance app is best for families?"
-    a: "Look for an app where several people see and update the same cars, history and reminders. That's the main thing OurGarage is built around. Check whether an app's multi-user features are meant for households or for business fleets before you choose."
+    a: "Look for an app where several people see and update the same cars, history and reminders. OurGarage is adding household sharing in an upcoming update. Check whether an app's multi-user features are meant for households or for business fleets before you choose."
   - q: "Can a car maintenance app track mileage automatically?"
     a: "Some can. Simply Auto offers GPS or Bluetooth trip tracking as a paid feature, and some apps read data from your car or a connected service. Most maintenance apps, including OurGarage, rely on odometer readings you enter."
 ---
 
-<p class="answer"><strong>Short answer:</strong> there isn't one best app; it depends on what you want to track. If you want fuel economy and every expense, look at Fuelly or Drivvo. If you also want automatic trip tracking, Simply Auto. If you want a free app that pulls in service history reported by shops, CARFAX Car Care. If you want reminders by date <em>and</em> mileage that everyone in your household sees, that's what OurGarage is built for (we make it, so weigh that accordingly). For a single date-based reminder, your phone's built-in Reminders app is enough.</p>
+<p class="answer"><strong>Short answer:</strong> there isn't one best app; it depends on what you want to track. If you want fuel economy and every expense, look at Fuelly or Drivvo. If you also want automatic trip tracking, Simply Auto. If you want a free app that pulls in service history reported by shops, CARFAX Car Care. If you want simple reminders by date <em>and</em> mileage with a clean service history, that's what OurGarage is built for (we make it, so weigh that accordingly). For a single date-based reminder, your phone's built-in Reminders app is enough.</p>
 
 This comparison reflects each app's App Store listing as of November 2026. Prices and features change, and some differ by country, so check the current listing before you decide. We've left prices out for that reason.
 
@@ -63,13 +63,13 @@ Free to download with paid upgrades. It combines a fuel log, maintenance reminde
 
 ### OurGarage
 
-This is our app, so read this section knowing that. OurGarage does one thing: keep track of what's due on your cars and who did what. You set reminders by date, by mileage or both, log services in seconds (date, odometer, work, cost), and everything works offline with no account unless you choose to share (sharing uses Sign in with Apple). Its main difference is household sharing: several people share one garage, so when one person logs an oil change, everyone sees it, and one Premium purchase covers the whole household.
+This is our app, so read this section knowing that. OurGarage does one thing: keep track of what's due on your cars and who did what. You set reminders by date, by mileage or both, log services in seconds (date, odometer, work, cost), and everything works offline with no account unless you choose to share (sharing uses Sign in with Apple). Household sharing, where several people share one garage, is coming in an upcoming update.
 
-Free for one car with unlimited records and reminders. Premium adds more vehicles, household sharing and cost totals, with a lifetime or an annual option.
+Free for one car with unlimited records and reminders. Premium adds more vehicles, cost totals and export (CSV, or a PDF service history per car), with a lifetime or an annual option.
 
-**Good for:** couples and families who share cars, and anyone who wants reminders without tracking fuel.
-**Strengths, plainly:** household sharing is built in, not bolted on: everyone sees the same cars, history and reminders on their own iPhone, and one Premium purchase covers the whole family, so nobody else pays. Premium is available as a one-time $9.99 lifetime purchase (US price) as well as an annual subscription, so you aren't forced into a subscription. Everything works offline, and without sharing there's no account at all.
-**Limits, plainly:** iPhone only. No fuel economy tracking, no automatic mileage (you enter odometer readings, and the app reminds you to when you have mileage-based reminders), no recall alerts, no shop-reported history, and no data export yet.
+**Good for:** anyone who wants service reminders by date and mileage without tracking fuel.
+**Strengths, plainly:** reminders by date, mileage or both, with a service history you can export. Premium is available as a one-time $9.99 lifetime purchase (US price) as well as an annual subscription, so you aren't forced into a subscription. Everything works offline, and without sharing there's no account at all.
+**Limits, plainly:** iPhone only. No fuel economy tracking, no automatic mileage (you enter odometer readings, and the app reminds you to when you have mileage-based reminders), no recall alerts, no shop-reported history, and household sharing isn't available yet.
 
 ### The free built-in option: Reminders or Calendar
 
