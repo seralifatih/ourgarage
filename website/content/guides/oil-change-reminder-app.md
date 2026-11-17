@@ -56,7 +56,7 @@ These steps work in most maintenance apps. We'll use OurGarage as the example si
 6. **Keep the mileage current.** OurGarage reminds you to update the odometer when you have mileage-based reminders. You enter one number and every mileage reminder for that car moves forward.
 7. **When the oil is changed,** log the service with the date and mileage. The reminder restarts from there.
 
-In OurGarage you get a notification the morning a reminder falls due, and anyone in your household with the app sees the same reminder.
+In OurGarage you get a notification the morning a reminder falls due.
 
 ## Phone calendar vs. a maintenance app
 

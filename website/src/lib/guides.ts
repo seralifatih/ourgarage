@@ -25,7 +25,7 @@ export function ctaHtml(slug: string, topic: string, position: 'mid' | 'end'): s
   <img src="/icon-96.png" width="48" height="48" alt="" loading="lazy">
   <div>
     <p class="cta-title">Get reminders for ${escapeHtml(topic)} in OurGarage</p>
-    <p class="cta-body">Set it once by date, mileage, or both. Your household sees the same reminders and service history. Free for one car.</p>
+    <p class="cta-body">Set it once by date, mileage, or both, and keep the full service history on your phone. Free for one car.</p>
     <a class="cta-btn" href="${escapeHtml(href)}" rel="noopener">Download on the App Store</a>
   </div>
 </aside>`;

@@ -89,4 +89,4 @@ Our guide to [sharing car maintenance with family](/guides/share-car-maintenance
 
 ## Doing this in OurGarage
 
-OurGarage was built for shared cars. Everyone in the household shares one garage: the same cars, service history and reminders on each person's iPhone. When your teen logs new wiper blades or your partner logs an oil change, everyone sees it. You invite people with a one-time code. Household sharing is part of Premium, and one purchase covers everyone in the household.
+OurGarage keeps each car's reminders and service history in one place, by date, mileage or both, so you can see what's due before your teen takes the car out. Household sharing, where your teen and your partner see the same garage on their own iPhones and can log services themselves, is coming in an upcoming update.
