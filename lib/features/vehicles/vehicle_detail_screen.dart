@@ -192,11 +192,10 @@ class _VehicleDetailView extends ConsumerWidget {
     );
     if (!uploaded || !context.mounted) return;
 
-    // Signed in, household created, garage uploaded. Issuing an invite code
-    // against `accept_household_invite()` is the next slice of this feature.
-    messenger
-      ..hideCurrentSnackBar()
-      ..showSnackBar(const SnackBar(content: Text('Invites are coming soon')));
+    // Signed in, household created, garage uploaded: inviting someone is the
+    // whole point of having got here, so go straight to where that happens.
+    ref.invalidate(currentHouseholdIdProvider);
+    context.push(AppRoutes.household);
   }
 
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {

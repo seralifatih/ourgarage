@@ -41,6 +41,10 @@ class AppConstants {
   static const String termsUrl = 'https://ourgarage.app/terms/';
   static const String privacyUrl = 'https://ourgarage.app/privacy/';
 
+  /// The App Store page, for invite messages sent to people who don't have
+  /// the app yet.
+  static const String appStoreUrl = 'https://apps.apple.com/app/id6801807059';
+
   /// Opens the App Store "write a review" page. Linked from Settings and
   /// always visible — unrelated to the system rating prompt.
   static const String appStoreReviewUrl =

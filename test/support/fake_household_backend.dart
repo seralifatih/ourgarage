@@ -74,6 +74,27 @@ class FakeHouseholdBackend implements HouseholdBackend {
     members[householdId]?.removeWhere((m) => m.userId == userId);
   }
 
+  /// Households the caller left, in order.
+  final leftHouseholds = <String>[];
+
+  /// What [leaveHousehold] reports. Mirrors `leave_household()` by default.
+  LeaveOutcome? leaveOutcome;
+
+  @override
+  Future<LeaveOutcome> leaveHousehold(String householdId) async {
+    leftHouseholds.add(householdId);
+    final roster = members[householdId] ?? [];
+    final me = roster.where((m) => m.userId == callerUserId).firstOrNull;
+    final others = roster.where((m) => m.userId != callerUserId).length;
+    roster.removeWhere((m) => m.userId == callerUserId);
+    return leaveOutcome ??
+        (others == 0
+            ? LeaveOutcome.deleted
+            : (me?.isOwner ?? false)
+            ? LeaveOutcome.transferred
+            : LeaveOutcome.left);
+  }
+
   @override
   Future<String> acceptInvite(String code) async {
     final entry = invites.entries

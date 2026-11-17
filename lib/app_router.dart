@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 
 import 'app_routes.dart';
+import 'features/household/widgets/household_screen.dart';
 import 'features/household/widgets/join_household_screen.dart';
 import 'features/paywall/paywall_screen.dart';
 import 'features/reminders/reminder_rule_form_screen.dart';
@@ -78,6 +79,10 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.settings,
       builder: (context, state) => const SettingsScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.household,
+      builder: (context, state) => const HouseholdScreen(),
     ),
     GoRoute(
       path: AppRoutes.joinHousehold,
