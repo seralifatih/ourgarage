@@ -96,6 +96,7 @@ def check(name, condition, detail=''):
 
 tag = time.strftime('%Y%m%d%H%M%S') + '-' + secrets.token_hex(3)
 user_id = None
+other_ids = []
 
 
 def owner_role(jwt, household):
@@ -152,12 +153,18 @@ def main():
                            {'name': 'E2E premium', 'owner_id': user_id, 'is_premium': True})
     check('cannot create a premium household', status in (401, 403), (status, body))
 
-    status, others = as_service('GET', f'profiles?id=neq.{user_id}&select=id&limit=1')
-    if status == 200 and others:
-        status, body = as_user('POST', 'households', jwt,
-                               {'name': 'E2E spoof', 'owner_id': others[0]['id']})
-        check("cannot create a household owned by someone else", status in (401, 403),
-              (status, body))
+    # A second throwaway user to spoof, rather than whoever happens to exist.
+    status, other = call('POST', '/auth/v1/admin/users', {
+        'email': f'og-e2e-{tag}-hh2@example.com', 'password': secrets.token_urlsafe(24),
+        'email_confirm': True,
+    })
+    assert status in (200, 201), ('create second user', status)
+    other_ids.append(other['id'])
+    as_service('POST', 'profiles', {'id': other['id'], 'display_name': 'E2E other'})
+    status, body = as_user('POST', 'households', jwt,
+                           {'name': 'E2E spoof', 'owner_id': other['id']})
+    check("cannot create a household owned by someone else", status in (401, 403),
+          (status, body))
 
     status, rows = as_service('GET', f'households?owner_id=eq.{user_id}&select=is_premium')
     check('no premium household was created', status == 200 and not any(r['is_premium'] for r in rows),
@@ -171,9 +178,14 @@ def cleanup():
         return
     as_service('DELETE', f'households?owner_id=eq.{user_id}')
     call('DELETE', f'/auth/v1/admin/users/{user_id}')
+    for other_id in other_ids:
+        as_service('DELETE', f'households?owner_id=eq.{other_id}')
+        call('DELETE', f'/auth/v1/admin/users/{other_id}')
     _, households = as_service('GET', f'households?owner_id=eq.{user_id}&select=id')
     status, _ = call('GET', f'/auth/v1/admin/users/{user_id}')
     remaining = (len(households) if isinstance(households, list) else 1) + (status == 200)
+    for other_id in other_ids:
+        remaining += call('GET', f'/auth/v1/admin/users/{other_id}')[0] == 200
     print(f'  remaining test data: {remaining}')
     checks.append(('cleanup: no test data remains', remaining == 0))
 
