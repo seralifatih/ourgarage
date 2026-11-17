@@ -206,21 +206,29 @@ def grant_premium(owner):
     if status not in (200, 201):
         return f'RevenueCat grant failed ({status})'
 
-    # Confirm RevenueCat reports the promo the way fetchEntitlement reads a
-    # lifetime: an entitlement with a null expires_date.
+    # Confirm RevenueCat reports it as long-lived. A lifetime promo comes back
+    # with an expires_date about 200 years out (seen 2026-11-17), not null;
+    # fetchEntitlement treats both as entitled.
     status, body = http('GET', f'https://api.revenuecat.com/v1/subscribers/{owner}',
                         None, {'Authorization': f'Bearer {RC_KEY}'})
     entitlement = ((body or {}).get('subscriber') or {}).get('entitlements', {}).get(ENTITLEMENT)
-    if status != 200 or not entitlement or entitlement.get('expires_date') is not None:
+    expires = (entitlement or {}).get('expires_date')
+    long_lived = expires is None or int(expires[:4]) - int(time.strftime('%Y')) > 50
+    if status != 200 or not entitlement or not long_lived:
         return f'promo granted, but RevenueCat does not report it as lifetime ({status})'
     return 'lifetime promo granted and confirmed'
 
 
 def mark_premium(owner, household):
-    # Same function every reconcile calls; service role only.
+    # Same function every reconcile calls; service role only. The expiry is
+    # read back from RevenueCat so this writes what a reconcile would.
+    _, body = http('GET', f'https://api.revenuecat.com/v1/subscribers/{owner}',
+                   None, {'Authorization': f'Bearer {RC_KEY}'})
+    expires = (((body or {}).get('subscriber') or {}).get('entitlements', {})
+               .get(ENTITLEMENT) or {}).get('expires_date')
     status, result = service('POST', '/rest/v1/rpc/apply_household_premium', {
         'hid': household,
-        'entitlements': [{'user_id': owner, 'active': True, 'expires_at': None}],
+        'entitlements': [{'user_id': owner, 'active': True, 'expires_at': expires}],
     })
     assert status == 200 and result and result.get('is_premium'), ('apply premium', status)
     return 'household is premium'

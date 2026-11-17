@@ -149,6 +149,16 @@ def create_user(role):
     return users[role], jwt
 
 
+def is_lifetime(expires_at):
+    """A lifetime promo: RevenueCat reports it with an expiry about 200 years
+    out rather than none (seen 2026-11-17), while a lifetime purchase has none.
+    Either counts."""
+    if expires_at is None:
+        return True
+    year = int(str(expires_at)[:4])
+    return year - int(time.strftime('%Y')) > 50
+
+
 def premium_seen_by(jwt, household):
     """The household's premium columns, as a member reads them ({} if none)."""
     _, rows = as_user('GET', f'households?id=eq.{household}'
@@ -212,7 +222,7 @@ def main():
     grant_promo(owner, 'lifetime')
     ok, p = claim_until(owner_jwt, member_jwt, household,
                         lambda p: p.get('is_premium') and p.get('premium_source_user_id') == owner
-                        and p.get('premium_expires_at') is None)
+                        and is_lifetime(p.get('premium_expires_at')))
     check('owner claim -> lifetime premium, owner is the source', ok, p)
     cached, status, body = False, None, None
     for attempt in range(5):
