@@ -13,7 +13,7 @@ faq:
   - q: "Should I follow the oil life monitor or the sticker on my windshield?"
     a: "If your car has an oil life monitor and the manual tells you to follow it, use the monitor. The shop's windshield sticker is often a generic, shorter interval. Either way, respect the time limit in the manual."
   - q: "Will changing my own oil void my warranty?"
-    a: "Not by itself. The FTC says a manufacturer can't void your warranty just because you did the maintenance yourself or used an independent shop. Keep receipts for the oil and filter and a note of the date and mileage, so you can prove it was done on schedule."
+    a: "Not by itself. The [FTC says](https://www.ftc.gov/news-events/news/press-releases/2011/01/ftc-offers-tips-making-most-your-auto-warranty) it's illegal for a manufacturer or dealer to deny warranty coverage simply because someone other than the dealer did the work, and that includes you. Coverage can still be refused for damage the work itself caused, so follow the manual's oil spec and keep the receipts for the oil and filter with a note of the date and mileage, so you can prove it was done on schedule."
 ---
 
 <p class="answer"><strong>Short answer:</strong> most cars on the road today need an oil change every 5,000 to 10,000 miles, or every 6 to 12 months, whichever comes first. The exact number for your car is in the maintenance section of your owner's manual. If you drive mostly short trips, tow, or live somewhere very hot, cold or dusty, your manual probably puts you on a shorter "severe" schedule.</p>

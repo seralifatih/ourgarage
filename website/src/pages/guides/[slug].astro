@@ -1,6 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
-import { getGuides, guideUrl, finishGuideHtml, ctaHtml, isPublished, readingMinutes, type Guide } from '../../lib/guides';
+import { getGuides, guideUrl, finishGuideHtml, ctaHtml, faqAnswerHtml, isPublished, readingMinutes, type Guide } from '../../lib/guides';
 import { SITE_URL, displayDate } from '../../site';
 
 export async function getStaticPaths() {
@@ -38,7 +38,7 @@ const jsonLd: object[] = [
     dateModified: modified,
     mainEntityOfPage: url,
     keywords: data.keywords.join(', '),
-    author: { '@type': 'Organization', name: 'OurGarage', url: SITE_URL },
+    author: { '@type': 'Person', name: 'Fatih', url: 'https://x.com/fatihbuilds' },
     publisher: { '@type': 'Organization', name: 'OurGarage', logo: { '@type': 'ImageObject', url: `${SITE_URL}/apple-touch-icon.png` } },
   },
   {
@@ -54,7 +54,9 @@ if (data.faq.length) {
   jsonLd.push({
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    mainEntity: data.faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+    // Answer text may carry <a> links (from [text](url) in frontmatter);
+    // Google accepts basic HTML links in FAQ answers.
+    mainEntity: data.faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: faqAnswerHtml(f.a) } })),
   });
 }
 ---
@@ -71,6 +73,10 @@ if (data.faq.length) {
   <article class="wrap">
     <p class="article-meta" style="margin:28px 0 0"><a href="/guides/">Guides</a></p>
     <h1>{data.title}</h1>
+    <div class="byline">
+      <p class="byline-name">By Fatih, OurGarage developer</p>
+      <p class="byline-bio">Fatih builds OurGarage, a car maintenance app for families, and writes these guides from owner's manuals and official sources like NHTSA and the FTC.</p>
+    </div>
     <p class="article-meta">
       {data.updated_date ? `Updated ${displayDate(data.updated_date)}` : displayDate(data.publish_date)}
       · {readingMinutes(rawHtml)} min read
@@ -81,7 +87,7 @@ if (data.faq.length) {
       <section class="faq">
         <h2>Common questions</h2>
         <dl>
-          {data.faq.map((f) => (<><dt>{f.q}</dt><dd>{f.a}</dd></>))}
+          {data.faq.map((f) => (<><dt>{f.q}</dt><dd set:html={faqAnswerHtml(f.a)} /></>))}
         </dl>
       </section>
     )}

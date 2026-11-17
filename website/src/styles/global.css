@@ -142,3 +142,9 @@ h3 { font-size: 20px; margin: 28px 0 8px; }
 .legal h3 { font-size: 18px; }
 .legal code { background: var(--surface); padding: 0.1em 0.35em; border-radius: 4px; font-size: 0.9em; }
 .legal .mail { font-size: 20px; font-weight: 700; margin: 16px 0; }
+
+/* Author byline on guides */
+.byline { margin: 4px 0 10px; }
+.byline-name { margin: 0; font-weight: 600; font-size: 16px; }
+.byline-bio { margin: 2px 0 0; font-size: 15px; color: var(--muted); }
+.faq dd a { overflow-wrap: anywhere; }

@@ -47,6 +47,19 @@ export function finishGuideHtml(html: string, slug: string, topic: string, liveS
   return out;
 }
 
+/**
+ * A FAQ answer from frontmatter as HTML: escaped, with `[text](https://…)`
+ * turned into a link. Used both on the page and in the FAQPage JSON-LD, so
+ * the visible answer and the structured one stay identical. Only https URLs
+ * are linked; anything else stays as literal text.
+ */
+export function faqAnswerHtml(answer: string): string {
+  return escapeHtml(answer).replace(
+    /\[([^\]]+)\]\((https:\/\/[^\s)]+)\)/g,
+    (_m, text: string, href: string) => `<a href="${href}" rel="noopener">${text}</a>`,
+  );
+}
+
 export function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 }
