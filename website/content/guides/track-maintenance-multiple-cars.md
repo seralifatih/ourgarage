@@ -2,7 +2,7 @@
 title: "How to Track Maintenance for Multiple Cars"
 description: "Keeping two, three or more cars on schedule: one system for every vehicle, separate intervals per car, staggered services and a clear owner for each."
 publish_date: 2026-11-28
-keywords: ["track maintenance multiple cars", "multiple vehicle maintenance tracker", "family car maintenance tracker", "manage maintenance for two cars"]
+keywords: ["track maintenance multiple cars", "multiple vehicle maintenance tracker", "manage maintenance for two cars"]
 related: ["car-maintenance-log-template", "share-car-maintenance-with-family", "car-maintenance-schedule-by-mileage"]
 cta_topic: "every car in your garage"
 faq:

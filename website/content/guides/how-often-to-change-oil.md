@@ -2,7 +2,8 @@
 title: "How Often Should You Change Your Oil?"
 description: "Most modern cars need an oil change every 5,000 to 10,000 miles or 6 to 12 months. Here's how to find your car's real interval and when to go sooner."
 publish_date: 2026-11-17
-keywords: ["how often to change oil", "oil change interval", "oil change every 3000 miles", "oil change time or mileage"]
+updated_date: 2026-11-18
+keywords: ["how often to change oil", "oil change interval", "oil change every 3000 miles", "oil change time or mileage", "how often to change synthetic oil", "oil filter change"]
 related: ["car-maintenance-schedule-by-mileage", "how-often-to-rotate-tires", "car-service-records-for-resale"]
 cta_topic: "oil changes"
 faq:
@@ -65,9 +66,21 @@ Yes. An oil change interval assumes the engine has the right amount of oil the w
 
 Check the dipstick about once a month, or whatever your manual recommends, with the car parked on level ground. Some cars have no dipstick and show the level on the dashboard instead; the manual explains how to read it. If you find yourself adding oil regularly, mention it to a mechanic.
 
-## Synthetic vs. conventional oil
+## How often to change synthetic oil
 
-Use the oil type your manual specifies. Many newer engines require full synthetic oil, and the longer intervals in their manuals assume it. If your manual allows conventional oil, it may list a different interval for it. Switching to synthetic in an engine that doesn't require it is fine, but don't stretch the interval beyond what the manual says just because the bottle advertises a longer life.
+Use the oil type your manual specifies. Many newer engines require full synthetic oil, and the longer intervals in their manuals assume it. Synthetic oil resists breaking down better than conventional oil, which is why engines that use it often have intervals somewhere around 7,500 to 10,000 miles or more. But the interval belongs to the engine, not the oil: the number in your manual is the one to follow.
+
+- **If your manual calls for synthetic**, follow its interval, and its severe schedule if your driving fits it.
+- **If your manual allows conventional oil**, it may list a different interval for it. Switching to synthetic is fine, but don't stretch the interval beyond what the manual says just because the bottle advertises a longer life.
+- **Synthetic blends** sit between the two. Treat them as the manual says for the oil spec you're using.
+
+Whatever the oil, the time limit in the manual still applies.
+
+## The oil filter
+
+The oil filter traps the particles the oil collects as it circulates. Most owner's manuals call for a new filter at every oil change, and that's what most shops do: a clogged filter can't clean the new oil, and filters are cheap compared with the oil itself. A few older manuals allowed changing the filter at every other oil change; if yours says so, that's fine to follow, but replacing it every time is the simple, safe habit.
+
+Use a filter that meets the manufacturer's specification for your engine. Some newer engines use a cartridge filter that sits in a housing rather than a spin-on canister; the procedure is a little different but the interval is the same.
 
 ## How to know when your next change is due
 

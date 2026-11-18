@@ -10,8 +10,8 @@ faq:
     a: "Usually yes. Most owner's manuals give a time limit as well as a mileage limit, often 6 or 12 months, and you're due at whichever comes first. Oil ages and collects moisture even when the car is barely driven."
   - q: "How often should I drive a car that I don't use much?"
     a: "Regular drives long enough to fully warm up the engine are better than frequent short trips. If the car will sit for weeks at a time, a battery maintainer keeps the battery charged."
-  - q: "Do tires expire if the car isn't driven?"
-    a: "Tires age even with plenty of tread left. Many vehicle manufacturers recommend replacing tires around six years old, and some tire makers give an upper limit of ten years. Check your owner's manual and the tire maker's guidance; the tire's manufacture date is in the DOT code on the sidewall."
+  - q: "Is it enough to start the car and let it idle once a week?"
+    a: "Usually not. A few minutes of idling uses battery power to start the engine but doesn't run long enough to recharge it or to fully warm the oil and exhaust. A proper drive, or a battery maintainer if the car must sit, does more good."
 ---
 
 <p class="answer"><strong>Short answer:</strong> a car that's barely driven still needs regular service, because oil, brake fluid, coolant, batteries and tires all age with time, not just miles. Follow the <em>time</em> limits in your owner's manual (for oil, commonly 6 or 12 months), even if the car is nowhere near the mileage limit. Use date-based reminders rather than mileage ones, check the battery and tire pressure monthly, and drive the car long enough to fully warm up when you do.</p>
@@ -71,7 +71,7 @@ If the car regularly sits for more than a couple of weeks, a battery maintainer 
 
 ### Watch tire age, not just tread
 
-Low-mileage cars often have tires with plenty of tread that are simply old. Rubber hardens and cracks with age. The tire's manufacture date is the last four digits of the DOT code on the sidewall (week and year, so "2419" means the 24th week of 2019). Many vehicle manufacturers recommend replacing tires around six years old regardless of tread; check your owner's manual and the tire maker's guidance.
+Low-mileage cars often have tires with plenty of tread that are simply old. Rubber hardens and cracks with age, so on a car that barely moves, the tires usually reach their age limit long before their tread limit. Check the manufacture date on the sidewall and your owner's manual's guidance; [how long do tires last](/guides/how-long-do-tires-last/) explains how to read the date code and what age limits manufacturers give.
 
 ### Keep the fuel fresh
 

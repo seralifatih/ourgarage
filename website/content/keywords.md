@@ -52,6 +52,31 @@ Comparison guides (#10, #17) must be dated, describe competitors only by what
 their current App Store listing says, leave out prices (they vary by region and
 change), and state OurGarage's limits as plainly as its strengths.
 
+## Guides 15–30: maintenance-item intervals (scheduled Dec 1–16, 2026)
+
+One query per guide; variants are H2s or FAQs, never a second page.
+
+| # | Main keyword | Slug | publish_date |
+|---|---|---|---|
+| 15 | how long do car batteries last | how-long-do-car-batteries-last | 2026-12-01 |
+| 16 | how long do brake pads last | how-long-do-brake-pads-last | 2026-12-02 |
+| 17 | how long do tires last | how-long-do-tires-last | 2026-12-03 |
+| 18 | cabin air filter | how-often-to-change-cabin-air-filter | 2026-12-04 |
+| 19 | change spark plugs | how-often-to-change-spark-plugs | 2026-12-05 |
+| 20 | transmission fluid | how-often-to-change-transmission-fluid | 2026-12-06 |
+| 21 | brake fluid | how-often-to-change-brake-fluid | 2026-12-07 |
+| 22 | engine air filter | how-often-to-change-engine-air-filter | 2026-12-08 |
+| 23 | how long do brakes last (rotors) | how-long-do-brakes-last | 2026-12-09 |
+| 24 | windshield wipers | how-often-to-replace-wiper-blades | 2026-12-10 |
+| 25 | coolant / antifreeze | how-often-to-change-coolant | 2026-12-11 |
+| 26 | how long do alternators last | how-long-do-alternators-last | 2026-12-12 |
+| 27 | differential fluid | how-often-to-change-differential-fluid | 2026-12-13 |
+| 28 | serpentine belt / timing belt | serpentine-and-timing-belt-replacement | 2026-12-14 |
+| 29 | fuel filter | how-often-to-change-fuel-filter | 2026-12-15 |
+| 30 | power steering fluid | how-often-to-change-power-steering-fluid | 2026-12-16 |
+
+Synthetic oil intervals and the oil filter are covered inside how-often-to-change-oil (no separate page).
+
 # Backlog by cluster
 
 ### Cluster 1: Oil and fluids
@@ -63,9 +88,9 @@ change), and state OurGarage's limits as plainly as its strengths.
 | 3 | how long can you go past an oil change | overdue-oil-change | R | — |
 | 4 | severe vs normal maintenance schedule: which one applies to me | severe-vs-normal-maintenance-schedule | R | — |
 | 5 | how often to check engine oil level | how-often-to-check-oil-level | R | — |
-| 6 | how often to change brake fluid | how-often-to-change-brake-fluid | R | — |
-| 7 | how often to change coolant | how-often-to-change-coolant | R | — |
-| 8 | how often to change transmission fluid | how-often-to-change-transmission-fluid | R | — |
+| 6 | how often to change brake fluid | how-often-to-change-brake-fluid | R | scheduled 2026-12-07 |
+| 7 | how often to change coolant | how-often-to-change-coolant | R | scheduled 2026-12-11 |
+| 8 | how often to change transmission fluid | how-often-to-change-transmission-fluid | R | scheduled 2026-12-06 |
 | 9 | oil life monitor vs fixed interval | oil-life-monitor-explained | R | — |
 
 ### Cluster 2: Tires
@@ -75,7 +100,7 @@ change), and state OurGarage's limits as plainly as its strengths.
 | 10 | how often to rotate tires (tire rotation interval) | how-often-to-rotate-tires | R | scheduled (guide 2) |
 | 11 | how often to check tire pressure | how-often-to-check-tire-pressure | R | scheduled (guide 4) |
 | 12 | how to check tire tread depth (penny test) | how-to-check-tire-tread-depth | C | — |
-| 13 | when to replace tires by age and tread | when-to-replace-tires | R | — |
+| 13 | when to replace tires by age and tread | when-to-replace-tires | R | covered by how-long-do-tires-last (2026-12-03) |
 | 14 | how often to get a wheel alignment | how-often-wheel-alignment | R | — |
 | 15 | seasonal tire changeover: when to switch to winter tires | when-to-switch-winter-tires | R | — |
 
@@ -88,11 +113,11 @@ change), and state OurGarage's limits as plainly as its strengths.
 | 18 | 100,000 mile maintenance checklist | 100000-mile-maintenance | C | — |
 | 19 | monthly car maintenance checklist | monthly-car-maintenance-checklist | C | — |
 | 20 | car maintenance for low-mileage drivers | low-mileage-car-maintenance | R | queue #14 |
-| 21 | how often to replace engine and cabin air filters | how-often-to-replace-air-filters | R | — |
-| 22 | how often to replace wiper blades | how-often-to-replace-wiper-blades | R | — |
-| 23 | how long does a car battery last and when to test it | car-battery-life-and-testing | R | — |
-| 24 | how often to replace brake pads (and the signs) | when-to-replace-brake-pads | R | — |
-| 25 | timing belt replacement interval (and how to tell if you have a chain) | timing-belt-replacement-interval | R | — |
+| 21 | how often to replace engine and cabin air filters | how-often-to-replace-air-filters | R | covered by cabin (2026-12-04) + engine (2026-12-08) air filter guides |
+| 22 | how often to replace wiper blades | how-often-to-replace-wiper-blades | R | scheduled 2026-12-10 |
+| 23 | how long does a car battery last and when to test it | car-battery-life-and-testing | R | covered by how-long-do-car-batteries-last (2026-12-01) |
+| 24 | how often to replace brake pads (and the signs) | when-to-replace-brake-pads | R | covered by how-long-do-brake-pads-last (2026-12-02) |
+| 25 | timing belt replacement interval (and how to tell if you have a chain) | timing-belt-replacement-interval | R | covered by serpentine-and-timing-belt-replacement (2026-12-14) |
 | 26 | annual car maintenance budget: how to plan for it | car-maintenance-budget | T | — |
 
 ### Cluster 4: Seasons and trips
