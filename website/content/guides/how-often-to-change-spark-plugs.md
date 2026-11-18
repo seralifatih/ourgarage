@@ -11,7 +11,7 @@ faq:
   - q: "What are the signs of bad spark plugs?"
     a: "Common signs are a rough idle, misfires or stumbling under acceleration, harder starting, lower fuel economy and a check engine light. Other faults cause the same symptoms, so have the misfire diagnosed rather than guessing."
   - q: "Should all spark plugs be replaced at the same time?"
-    a: "Yes. Plugs wear at a similar rate, so they're replaced as a set. Replacing only one leaves the engine running on a mix of old and new plugs."
+    a: "Usually, yes. Plugs wear at a similar rate, so they're normally replaced as a set. Replacing only one leaves the engine running on a mix of old and new plugs, though a mechanic may replace a single plug that is fouled or damaged."
 ---
 
 <p class="answer"><strong>Short answer:</strong> it depends on the type of spark plug your engine uses. Basic copper plugs are often replaced around 30,000 miles, while the iridium or platinum plugs fitted to most newer cars commonly last 60,000 to 100,000 miles or more. Your owner's manual gives the exact mileage for your engine, sometimes with a time limit too.</p>
@@ -34,7 +34,7 @@ Diesel engines don't use spark plugs; they use glow plugs for cold starts, which
 | Platinum | Often 60,000 to 100,000 miles | Longer-lasting electrodes |
 | Iridium | Often 60,000 to 100,000+ miles | Fitted to many modern engines |
 
-These are general ranges. The interval for your engine is in the maintenance schedule of your owner's manual, and it assumes the plug type the manufacturer fitted. If you or a previous owner switched to a different type, the interval changes with it.
+These are general ranges and vary by engine and plug design. The interval for your engine is in the maintenance schedule of your owner's manual, and it assumes the plug type the manufacturer fitted. If you or a previous owner switched to a different type, the interval changes with it.
 
 Some manuals also list a time limit, and many specify a shorter interval on the severe maintenance schedule.
 
@@ -46,7 +46,7 @@ Some manuals also list a time limit, and many specify a shorter interval on the 
 - **Lower fuel economy** than you're used to.
 - **A check engine light**, often with a misfire code that a shop or a code reader can read.
 
-None of these is unique to spark plugs. Ignition coils, fuel injectors and vacuum leaks can cause the same symptoms. If the plugs aren't near their interval, have the problem diagnosed before replacing parts.
+None of these is unique to spark plugs. Ignition coils, fuel injectors and vacuum leaks can cause the same symptoms. If the plugs aren't near their interval, have the problem diagnosed before replacing parts. A flashing check engine light means a severe misfire: reduce speed and load and get it checked promptly, because continued driving can damage the catalytic converter.
 
 ## What old spark plugs can tell you
 
@@ -68,9 +68,9 @@ If you do it yourself:
 
 - **Use the plug your manual specifies**, including the correct heat range.
 - **Check the gap** if the plug maker says it needs setting; many modern plugs come pre-gapped.
-- **Tighten to the specified torque.** Over-tightening can damage the threads in the cylinder head.
+- **Tighten to the specified torque** from your manual or the plug maker, using a torque wrench. Over-tightening can damage the threads in the cylinder head, and under-tightening can let the plug loosen.
 - **Follow the plug maker's guidance on anti-seize.** Some plugs have a coating and shouldn't have anti-seize added.
-- **Work on a cold engine.**
+- **Work on a cold engine.** Removing plugs from a hot aluminum cylinder head can damage the threads. Blow or vacuum debris out of each plug well before removing the plug, so nothing falls into the cylinder.
 
 Replace all the plugs as a set. It's also a good moment to check the ignition coils or plug wires for cracks or damage.
 

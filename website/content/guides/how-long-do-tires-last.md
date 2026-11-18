@@ -16,7 +16,7 @@ faq:
     a: "It ages too. A spare ages even if it has never touched the road. Check its pressure and age when you check the others, and don't rely on an old spare for long distances."
 ---
 
-<p class="answer"><strong>Short answer:</strong> tires wear out either by tread or by age, whichever comes first. By tread, many all-season tires last somewhere around 40,000 to 80,000 miles, depending on the tire, the car and how you drive. By age, many vehicle manufacturers recommend replacing tires at about six years old even if the tread looks fine. Check your owner's manual and the tire maker's guidance for your exact tires.</p>
+<p class="answer"><strong>Short answer:</strong> tires wear out by tread or by age, whichever comes first: many all-season tires last somewhere around 40,000 to 80,000 miles, depending on the tire, the car and how you drive. By age, many vehicle manufacturers recommend replacing tires at about six years old even if the tread looks fine. Check your owner's manual and the tire maker's guidance for your exact tires.</p>
 
 Two tires that look the same can have very different lives. A set on a light commuter car that's rotated and kept at the right pressure can far outlast a set on a heavy car that's driven hard and rarely checked.
 

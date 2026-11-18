@@ -2,16 +2,16 @@
 title: "How Often to Change an Engine Air Filter"
 description: "Most engine air filters last 15,000 to 30,000 miles, less on dusty roads. How to check yours, the signs it's clogged, and how it differs from the cabin filter."
 publish_date: 2026-12-08
-keywords: ["engine air filter", "how often to change engine air filter", "air filter in car", "car air filter replacement"]
+keywords: ["engine air filter", "how often to change engine air filter", "engine air filter replacement", "how to check engine air filter"]
 related: ["how-often-to-change-cabin-air-filter", "how-often-to-change-oil", "car-maintenance-schedule-by-mileage"]
 cta_topic: "engine air filter changes"
 faq:
   - q: "How often should you change the air filter in your car?"
     a: "For the engine air filter, the common range is 15,000 to 30,000 miles, with a shorter interval on dusty or unpaved roads. Many shops also inspect it at every oil change. Your owner's manual gives the exact interval."
   - q: "Is the engine air filter the same as the cabin air filter?"
-    a: "No. The engine air filter cleans the air the engine burns; the cabin air filter cleans the air coming through your vents. They're in different places and often have different intervals."
+    a: "No. The engine air filter cleans the air the engine burns; the cabin air filter cleans the air coming through your vents. They're in different places and do different jobs. Their intervals are often similar, but check your manual for each."
   - q: "Does a dirty air filter hurt fuel economy?"
-    a: "In modern fuel-injected engines, a clogged filter mainly reduces power and acceleration; the engine's computer adjusts the fuel to the air it gets. It's still worth replacing on schedule, because a badly clogged or damaged filter can let dirt into the engine."
+    a: "On modern fuel-injected engines, a clogged filter mainly reduces power and acceleration, with little effect on fuel economy in most cases, because the engine's computer matches the fuel to the air it gets. It's still worth replacing on schedule, because a badly clogged or damaged filter can let dirt into the engine."
 ---
 
 <p class="answer"><strong>Short answer:</strong> most engine air filters need replacing every 15,000 to 30,000 miles, and sooner if you drive on dusty, unpaved or construction-heavy roads. Many shops check it at every oil change, and you can check it yourself in a couple of minutes. Your owner's manual gives the interval for your car.</p>
@@ -68,7 +68,7 @@ Checking takes a couple of minutes and costs nothing, so when in doubt, open the
 
 ## Paper vs. reusable filters
 
-Most cars come with disposable paper filters, which are simply replaced. Some aftermarket filters are washable and reusable, often with an oiled cotton element. If you use one, follow the maker's cleaning and oiling instructions closely; too much oil can foul sensors in the intake. If you're not sure, stick with the type your manual specifies.
+Most cars come with disposable paper filters, which are simply replaced. Some aftermarket filters are washable and reusable, often with an oiled cotton element. If you use one, follow the maker's cleaning and oiling instructions closely; too much oil can foul the mass airflow sensor, which can cause rough running or a check engine light, and damage caused by an aftermarket part may not be covered under warranty. If you're not sure, stick with the type your manual specifies.
 
 ## Turbocharged engines
 

@@ -13,10 +13,10 @@ faq:
   - q: "What does it mean when the steering wheel shakes when braking?"
     a: "A vibration or pulsing through the pedal or steering wheel under braking often points to uneven rotor thickness or deposits on the rotors, commonly called warped rotors. Have the brakes inspected; it can also have other causes."
   - q: "Why do new brakes squeak sometimes?"
-    a: "Light squeaks can come from new pads bedding in, moisture or dust. A persistent squeal, especially a high-pitched one, can be the pad wear indicator. Grinding is more serious and needs checking right away."
+    a: "Light squeaks can come from new pads bedding in, moisture or dust. A persistent squeal, especially a high-pitched one, can be the pad wear indicator. Grinding can mean metal is touching metal. Avoid driving until the brakes have been inspected."
 ---
 
-<p class="answer"><strong>Short answer:</strong> "the brakes" are several parts that wear at very different rates. Pads wear fastest. Rotors usually last longer, often through one or two sets of pads, but they're replaced once they wear below a minimum thickness. Calipers, hoses and lines can last much of the car's life, while brake fluid ages on a time schedule. Your owner's manual gives inspection intervals; worn parts are replaced when inspection shows they're due.</p>
+<p class="answer"><strong>Short answer:</strong> "the brakes" are several parts that wear at very different rates: pads wear fastest, while rotors usually last through one or two sets of pads and are replaced once they wear below a minimum thickness. Calipers, hoses and lines can last much of the car's life, and brake fluid ages on a time schedule. Your owner's manual gives inspection intervals, and worn parts are replaced when inspection shows they're due.</p>
 
 Pads are the part people usually mean, and we cover them in detail in [how long do brake pads last](/guides/how-long-do-brake-pads-last/). This guide is about everything else, especially the rotors.
 
@@ -52,7 +52,7 @@ Each rotor has a minimum thickness set by the maker, and on many rotors it's sta
 - **Deep grooves or scoring** on the rotor face, visible through the wheel.
 - **A lip** around the outer edge where the pad doesn't reach.
 - **Blue or dark heat marks.**
-- **Grinding**, which can mean pads are worn through and metal is cutting into the rotor.
+- **Grinding**, which can mean pads are worn through and metal is cutting into the rotor. Avoid driving until it has been inspected.
 
 ## Resurface or replace?
 
@@ -70,13 +70,15 @@ These usually last much longer, but they can fail:
 
 A good brake inspection covers all of these, not just the pads.
 
+**Don't keep driving if** the pedal feels soft or sinks toward the floor, you see brake fluid leaking, a red brake light stays on with the parking brake released, or the car pulls hard to one side when braking. Have it inspected or towed.
+
 ## The parking brake
 
 The parking brake wears and needs attention too, though it's often forgotten:
 
 - **Cable-operated parking brakes** can stretch over time, so the lever or pedal travels farther before it holds. Many can be adjusted.
 - **Rear drum or "drum-in-hat" parking brakes** have their own shoes that wear slowly.
-- **Electric parking brakes** often need a service mode, set with a scan tool or a button sequence in the manual, before the rear pads can be replaced.
+- **Electric parking brakes** often need a service mode, set with a scan tool or a button sequence in the manual, before the rear pads can be replaced. Forcing the caliper piston back without it can damage the brake.
 
 Use the parking brake regularly. One that's rarely applied can seize, especially on cars that sit or face road salt.
 

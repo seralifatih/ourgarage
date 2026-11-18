@@ -16,7 +16,7 @@ faq:
     a: "On many cars, yes, with basic tools and the steps in the owner's manual. Some newer cars, especially those with start-stop systems, need a specific battery type and may need the new battery registered with the car's computer, so check the manual first."
 ---
 
-<p class="answer"><strong>Short answer:</strong> a typical car battery lasts about three to five years. Heat, lots of short trips and long periods of sitting push it toward the shorter end. Once your battery is three years old, have it tested once a year, and replace it when the test or the warning signs say it's weakening, not when it leaves you stranded.</p>
+<p class="answer"><strong>Short answer:</strong> a typical car battery lasts about three to five years. Heat, lots of short trips and long periods of sitting push it toward the shorter end, and your owner's manual may give guidance for your car. Once your battery is three years old, have it tested once a year, and replace it when the test or the warning signs say it's weakening, not when it leaves you stranded.</p>
 
 Batteries rarely fail with much notice. One morning the engine cranks a little slower than usual; a few weeks later it doesn't crank at all. Knowing the age of your battery and checking it before it's a problem is the whole trick.
 
@@ -37,8 +37,8 @@ A car battery is a chemical device, and the chemistry wears out with time and us
 - **Slow cranking.** The engine turns over more slowly than usual, especially on cold mornings.
 - **Clicking when you turn the key or press start**, with little or no cranking.
 - **Dim lights or a flickering dashboard** while starting.
-- **The battery warning light** on the dashboard. This can also point to a charging problem rather than the battery itself.
-- **A swollen or cracked case**, or a rotten-egg smell. Stop and have it checked; don't keep using it.
+- **The battery warning light** on the dashboard. This light usually points to a charging problem, such as the alternator, rather than the battery itself, so have the charging system checked too.
+- **A swollen or cracked case, a leak, or a rotten-egg smell.** Don't jump-start or charge it, and keep flames and sparks away. Have it checked or replaced before driving further.
 - **White or green corrosion** on the terminals, which can cause poor connections.
 - **Age.** Many batteries have a date code or sticker on the case. If yours is past three years, it's worth testing even if it seems fine.
 

@@ -50,7 +50,7 @@ Coolants use different chemistries, and they're not all compatible. Color isn't 
 
 - **Use the type your manual specifies**, by its specification or the manufacturer's part name, not by color.
 - **Don't mix types.** If you're not sure what's in the car, ask a shop to check, or have the system flushed and refilled with the right one.
-- **Mixed or concentrated?** Many coolants are sold premixed at 50/50 with water. Concentrate must be mixed in the right ratio, usually with distilled water. The product label and your manual say how.
+- **Mixed or concentrated?** Many coolants are sold premixed at 50/50 with water. Concentrate must be mixed in the right ratio, often 50/50 but not always, usually with distilled water. Undiluted concentrate cools worse than a proper mix. The product label and your manual say how.
 
 ## How to check the coolant level safely
 
@@ -70,7 +70,7 @@ Checking it monthly is easy, and it's one of the checks on our [road trip checkl
 - **A level that keeps dropping.**
 - **Weak heat** from the heater in winter.
 
-If the engine starts to overheat, pull over safely and turn it off. Driving an overheating engine can cause serious damage.
+If the engine starts to overheat, pull over safely and turn it off. Driving an overheating engine can cause serious damage. Let the engine cool completely before opening the radiator cap or the reservoir cap, because hot coolant can spray out and scald. If it overheats again after topping up, have it towed rather than driving on.
 
 ## The rest of the cooling system
 
@@ -83,6 +83,6 @@ Coolant is only one part of the system. A few other parts wear out with age and 
 
 ## What a coolant change involves
 
-A coolant service drains the old coolant, sometimes flushes the system, and refills it with the right type and mix. Air pockets must be bled out, a step that varies by car. Many owners leave it to a shop, and coolant must be disposed of properly because it's toxic to people and animals.
+A coolant service drains the old coolant, sometimes flushes the system, and refills it with the right type and mix. Air pockets must be bled out, a step that varies by car. Many owners leave it to a shop, and coolant must be disposed of properly. It's toxic to people and animals and can taste sweet, so wipe up spills and keep it away from pets and children.
 
 Record the date, the mileage and the coolant used. Coolant intervals are measured in years as well as miles, so it matters even for cars that don't drive much; see [low-mileage car maintenance](/guides/low-mileage-car-maintenance/). For where it fits among everything else, see the [car maintenance schedule by mileage](/guides/car-maintenance-schedule-by-mileage/).

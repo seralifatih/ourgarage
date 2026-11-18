@@ -14,7 +14,7 @@ faq:
     a: "Only briefly. Once the alternator stops charging, the car runs on the battery until it's drained, then stalls. If the battery light comes on while driving, turn off what you can and head somewhere safe to have it checked."
 ---
 
-<p class="answer"><strong>Short answer:</strong> alternators don't have a service interval, and many last for much of a car's life. Lifespans of roughly 7 to 10 years are often quoted, but heat, heavy electrical loads and a worn drive belt can shorten that. Your owner's manual won't list a replacement mileage; instead, watch for the warning signs below and have the charging system tested if you see them.</p>
+<p class="answer"><strong>Short answer:</strong> alternators don't have a service interval, and many last for much of a car's life. Lifespans of roughly 7 to 10 years are often quoted, but heat, heavy electrical loads and a worn drive belt can shorten that. Your owner's manual usually won't list a replacement mileage; instead, watch for the warning signs below and have the charging system tested if you see them.</p>
 
 The alternator is the part that keeps the battery charged and powers the car's electrics while the engine runs. When it starts to fail, the symptoms are easy to blame on the battery, which is why it's worth knowing the difference.
 
@@ -41,7 +41,7 @@ The battery's main job is starting the engine. Once the engine is running, the a
 - **Electrical glitches**: power windows slowing down, the radio resetting, warning lights coming and going.
 - **A battery that keeps going flat**, even after charging or replacing it.
 - **A whining or grinding noise** from the front of the engine that changes with engine speed.
-- **A burning smell**, which can come from an overheating alternator or a slipping belt.
+- **A burning smell**, which can come from an overheating alternator or a slipping belt. If you smell burning or see smoke, pull over safely and switch off.
 - **The car stalling** while driving, once the battery is drained.
 
 ## Battery or alternator?
@@ -59,7 +59,7 @@ A shop can test both quickly. With a voltmeter, a running engine typically shows
 
 ## Can a bad alternator damage the battery?
 
-Yes, in two ways. If the alternator stops charging, the car drains the battery completely, and repeated deep discharges shorten a battery's life. If the alternator's voltage regulator fails the other way and overcharges, the battery can overheat and be damaged.
+Yes, in two ways. If the alternator stops charging, the car drains the battery completely, and repeated deep discharges shorten a battery's life. If the alternator's voltage regulator fails the other way and overcharges, the battery can overheat, swell or vent gas, and other electronics can be damaged. A swollen battery case or a rotten-egg smell is urgent; have the car checked before driving further.
 
 That's why, after an alternator failure, it's worth having the battery tested too, and why replacing a battery that keeps going flat doesn't fix the problem if the alternator is the cause. A shop testing the charging system checks both at once.
 
@@ -67,7 +67,7 @@ That's why, after an alternator failure, it's worth having the battery tested to
 
 1. **Turn off what you can**: heated seats, rear defroster, the radio.
 2. **Avoid stopping the engine** unless you need to; it may not restart.
-3. **Head somewhere safe** to have it checked, without planning a long drive.
+3. **Head somewhere safe** to have it checked, without planning a long drive. If the engine stalls, steering and brakes get much heavier to operate, so pull over early rather than running the battery down in traffic.
 
 Before a long trip, a failing alternator is one of the things worth catching early; a charging test fits naturally into our [road trip checklist](/guides/road-trip-car-checklist/).
 

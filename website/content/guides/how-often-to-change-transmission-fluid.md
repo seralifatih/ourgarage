@@ -26,7 +26,7 @@ Transmission repairs are among the most expensive a car can need, and the fluid 
 
 Transmission fluid cools and lubricates the transmission, and in an automatic it also transmits power and controls shifting. Over time, heat breaks it down and it picks up wear particles. How fast depends on:
 
-- **The transmission type.** Conventional automatics, continuously variable transmissions (CVTs), dual-clutch automatics and manual gearboxes all use different fluids and have different intervals.
+- **The transmission type.** Conventional automatics, continuously variable transmissions (CVTs), dual-clutch automatics and manual gearboxes all use different fluids and have different intervals. CVTs and dual-clutch transmissions are especially particular about fluid, so never substitute a general-purpose one.
 - **The fluid.** Each transmission specifies its own fluid. Using the wrong type can cause shifting problems or damage.
 - **How the car is used.** Heat is the main enemy. Towing, heavy loads, hilly terrain, stop-and-go traffic and hot climates all raise transmission temperatures.
 
@@ -38,7 +38,7 @@ Many of those same manuals list a change on the severe maintenance schedule, and
 
 ## Manual transmissions
 
-Manual gearboxes use gear oil or a specific manual transmission fluid, not the same fluid as an automatic. Intervals vary by maker; some list a change, some only an inspection. The owner's manual has the details.
+Manual gearboxes use gear oil or a specific manual transmission fluid, and a few specify automatic transmission fluid or another fluid, so use exactly what the manual lists. Intervals vary by maker; some list a change, some only an inspection. The owner's manual has the details.
 
 ## Signs something is wrong
 
@@ -53,9 +53,9 @@ Low fluid from a leak can cause any of these, and so can more serious faults. Ha
 
 ## Checking the fluid
 
-Some automatics have a dipstick, often with a colored handle; the manual explains how to read it, usually with the engine warm and running. Many newer transmissions have no dipstick and need a shop to check the level.
+Some automatics have a dipstick, often with a colored handle; the manual explains how to read it, often with the engine warm and running and the car level, though some say to check in neutral or with the engine off. Many newer transmissions have no dipstick and need a shop to check the level.
 
-Fresh automatic fluid is often red or pink and fairly clear. Dark brown fluid, a burnt smell or bits in the fluid all mean it's time for a change, or for a closer look.
+Fresh automatic fluid is often red or pink and fairly clear. Dark brown fluid or a burnt smell can mean the fluid is worn or has overheated. Bits or a metallic shine in the fluid can point to internal wear, so have a transmission shop look at it before simply changing the fluid.
 
 ## Drain-and-fill vs. flush
 

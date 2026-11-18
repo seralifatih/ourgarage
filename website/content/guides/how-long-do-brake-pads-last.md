@@ -11,12 +11,12 @@ faq:
   - q: "Do front and rear brake pads wear at the same rate?"
     a: "Usually not. The front brakes do most of the stopping on most cars, so front pads typically wear faster than rear ones. That's why the two axles are often replaced at different times."
   - q: "Should brake pads be replaced on both sides at once?"
-    a: "Yes. Pads are replaced per axle, both sides together, so the car brakes evenly. Replacing one side only can make the car pull when you brake."
+    a: "Yes, in almost all cases. Pads are replaced per axle, both sides together, so the car brakes evenly. Replacing one side only can make the car pull when you brake."
   - q: "Do brake pads last longer on hybrids and EVs?"
     a: "Often, yes. Regenerative braking does much of the slowing, so the friction brakes are used less. The flip side is that lightly used brakes can stick or corrode, so they still need regular inspection."
 ---
 
-<p class="answer"><strong>Short answer:</strong> brake pads commonly last anywhere from about 25,000 to 70,000 miles, and some last longer. How you drive matters more than anything else: stop-and-go city driving, heavy loads and hills wear pads far faster than steady highway miles. Most owner's manuals don't give a replacement mileage; they say to inspect the brakes regularly and replace the pads when they're worn.</p>
+<p class="answer"><strong>Short answer:</strong> brake pads commonly last anywhere from about 25,000 to 70,000 miles, and some last longer. How and where you drive matters a lot: stop-and-go city driving, heavy loads and hills wear pads far faster than steady highway miles. Most owner's manuals don't give a replacement mileage; they say to inspect the brakes regularly and replace the pads when they're worn.</p>
 
 That makes brake pads different from oil or filters. There's no number to count down to, so the only way to know is to look, or to notice the warning signs.
 
@@ -37,9 +37,9 @@ The front pads usually do most of the work, so they tend to wear out before the 
 ## Signs your brake pads need replacing
 
 - **Squealing when you brake.** Many pads have a small metal tab that squeals against the rotor when the pad gets thin. It's designed to be annoying so you'll book a check.
-- **Grinding or scraping.** This can mean the pad material is gone and metal is touching metal. Get the car checked straight away; it can damage the rotors and reduces braking.
-- **A brake warning light.** Some cars have pad wear sensors that turn on a light. Others only light up for low fluid or a parking brake fault, so check what the light means in your manual.
-- **Longer stopping distances** or a brake pedal that feels different.
+- **Grinding or scraping.** This can mean the pad material is gone and metal is touching metal. Avoid driving the car until it has been inspected: braking may be much weaker than normal, and it can badly damage the rotors. If you must move it, drive slowly and gently to a shop, or have it towed.
+- **A brake warning light.** Some cars have pad wear sensors that turn on a light. Others light up for low brake fluid or a parking brake that's still applied. A red brake light that stays on with the parking brake released can mean a serious brake problem, so check your manual and have it inspected promptly.
+- **Longer stopping distances, or a brake pedal that feels soft, spongy or sinks toward the floor.** A soft or sinking pedal can mean a fluid leak or another hydraulic fault. Don't keep driving; have the car inspected or towed.
 - **The car pulling to one side** when you brake.
 - **Visibly thin pads.** On many cars you can see the outer pad through the wheel spokes.
 
@@ -61,7 +61,7 @@ The same applies to cars that sit for long periods.
 
 ## Driving habits that make pads last longer
 
-How you drive changes pad life more than almost anything else:
+How you drive changes pad life a great deal:
 
 - **Look ahead and ease off early.** Coasting toward a red light instead of braking late takes a lot of wear off the pads.
 - **Use lower gears on long descents** if your manual recommends it, so the brakes aren't doing all the work.

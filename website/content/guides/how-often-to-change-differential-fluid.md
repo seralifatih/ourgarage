@@ -42,7 +42,7 @@ Intervals vary by maker and model. Common patterns:
 - **Longer intervals or "inspect only"** for some vehicles under normal use.
 - **Shorter intervals for severe use**: towing, heavy loads, off-roading, driving through deep water.
 
-Driving through water deep enough to reach the axle can let water into a differential through its vent. Many manuals call for checking or changing the fluid after that.
+Driving through water deep enough to reach the axle can let water into a differential through its vent. Many manuals call for checking or changing the fluid after that. Milky or foamy fluid is a sign water got in.
 
 If your driving fits the severe schedule for engine oil, it may well fit it for the differential too. See [how often to change your oil](/guides/how-often-to-change-oil/) for what counts as severe.
 
@@ -52,7 +52,7 @@ Some vehicles have a limited-slip differential, which needs a specific fluid or 
 
 ## Checking the fluid level
 
-Most differentials have no dipstick. On many, the level is checked by removing the fill plug on the side of the housing: with the vehicle level, the fluid should come up to around the bottom of the fill hole. The exact method varies, and some designs differ, so follow your manual or have a shop check it.
+Most differentials have no dipstick. On many, the level is checked by removing the fill plug on the side of the housing: with the vehicle level, the fluid should come up to around the bottom of the fill hole. The exact method varies, and some designs differ, so follow your manual or have a shop check it. It means working under the vehicle, which needs a lift or proper jack stands, never just a jack. If you're changing the fluid, make sure you can open the fill plug before removing the drain plug, so you aren't left with a differential you can't refill.
 
 A useful habit is to ask for the differential level to be checked whenever the vehicle is on a lift for an oil change or tire rotation, especially if you tow. It takes a few minutes, and low fluid caught early saves a much bigger repair.
 
@@ -64,7 +64,7 @@ A useful habit is to ask for the differential level to be checked whenever the v
 - **Gear oil leaks**: a thick, often strong-smelling fluid under the axle.
 - **Vibration** that gets worse with speed.
 
-Low fluid from a leaking seal is a common cause, and much cheaper to fix early than worn gears.
+Low fluid from a leaking seal can be a cause, and it is much cheaper to fix early than worn gears. These symptoms also overlap with worn tires, wheel bearings, universal joints and the driveshaft, so get a proper diagnosis.
 
 ## Transfer cases and AWD units
 
@@ -78,6 +78,6 @@ Your owner's manual lists every unit that needs servicing. If it lists more than
 
 ## What the service involves
 
-Changing differential fluid usually means removing a drain plug or the differential cover, draining the old oil, and refilling through a fill plug to the correct level. It's quicker and cheaper than many services. A good shop checks the drained oil for metal particles, which can be an early sign of wear.
+Changing differential fluid usually means removing a drain plug or the differential cover, draining the old oil, and refilling through a fill plug to the correct level. It's quicker and cheaper than many services. A good shop checks the drained oil and the magnetic drain plug. A fine metallic paste is common, but chunks or flakes can point to wear.
 
 Record each fluid separately if your vehicle has more than one: front differential, rear differential and transfer case often have different intervals. For where these fit among everything else, see the [car maintenance schedule by mileage](/guides/car-maintenance-schedule-by-mileage/).

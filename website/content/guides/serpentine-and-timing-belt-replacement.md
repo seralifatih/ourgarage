@@ -13,10 +13,10 @@ faq:
   - q: "Does my car have a timing belt or a timing chain?"
     a: "Your owner's manual or a dealer can tell you. If the maintenance schedule lists a timing belt replacement, your engine has a belt. Timing chains usually have no replacement interval."
   - q: "What happens if a timing belt breaks?"
-    a: "The engine stops. On many engines, called interference engines, a broken timing belt also lets the pistons hit the valves, which can cause major damage. That's why timing belts are replaced on schedule, before they fail."
+    a: "The engine stops, often without warning while you're driving, and steering and braking get heavier without engine power. Pull over safely and don't try to restart it. On many engines, called interference engines, a broken timing belt also lets the pistons hit the valves, which can cause major damage. That's why timing belts are replaced on schedule, before they fail."
 ---
 
-<p class="answer"><strong>Short answer:</strong> they're two different belts with different stakes. The serpentine belt, which drives the alternator and other accessories, is often replaced somewhere around 60,000 to 100,000 miles, or whenever inspection shows wear. The timing belt, which keeps the engine's internals in sync, has a strict replacement interval, often somewhere around 60,000 to 105,000 miles plus a time limit, and on many engines a failure causes serious damage. Many engines use a timing chain instead, which usually has no interval. Your owner's manual says which your engine has and when.</p>
+<p class="answer"><strong>Short answer:</strong> the serpentine belt, which drives the alternator and other accessories, is often replaced somewhere around 60,000 to 100,000 miles, or whenever inspection shows wear. The timing belt, which keeps the engine's internals in sync, has a strict interval, often around 60,000 to 105,000 miles plus a time limit, and on many engines a failure causes serious damage. Many engines use a timing chain instead, which usually has no interval; your owner's manual says which your engine has and when.</p>
 
 People often mix the two up, and the difference matters: one failure leaves you stranded, the other can cost you the engine.
 
@@ -31,7 +31,7 @@ The serpentine (or drive) belt is the visible ribbed belt at the front of the en
 - the power steering pump, on cars with hydraulic steering,
 - the air conditioning compressor.
 
-Many modern serpentine belts last around 60,000 to 100,000 miles, but they wear by condition, so inspection matters more than mileage. Some older cars have several separate V-belts instead of one serpentine belt.
+Many modern serpentine belts last around 60,000 to 100,000 miles, but they wear by condition, so inspection matters more than mileage. Newer belts often show wear as worn-down ribs rather than visible cracks, so a belt that looks clean can still be due. Some older cars have several separate V-belts instead of one serpentine belt.
 
 ### Signs the serpentine belt needs replacing
 
@@ -39,13 +39,13 @@ Many modern serpentine belts last around 60,000 to 100,000 miles, but they wear 
 - **Fraying edges**, chunks missing or ribs separating.
 - **A shiny, glazed surface.**
 - **Squealing or chirping**, especially on cold starts or when turning the steering.
-- **The battery light or overheating**, which can mean the belt is slipping or broken.
+- **The battery light or overheating**, which can mean the belt is slipping or broken. If the temperature gauge rises or the steering suddenly gets heavy, pull over safely and stop.
 
 The belt's tensioner and idler pulleys also wear. A worn tensioner lets the belt slip, so many shops check or replace it at the same time. A slipping belt can also undercharge the battery; see [how long alternators last](/guides/how-long-do-alternators-last/) for the charging-system side.
 
 ## The timing belt
 
-The timing belt sits inside the engine, behind a cover, and keeps the crankshaft and camshafts turning in exact step. It isn't visible and doesn't give much warning before it fails.
+The timing belt sits behind a cover at the front or side of the engine, and keeps the crankshaft and camshafts turning in exact step. It isn't visible and doesn't give much warning before it fails.
 
 That's why it has a strict interval. The maintenance schedule in your owner's manual gives it, often as a mileage and a time limit, because the rubber ages even if the car isn't driven much.
 
@@ -78,4 +78,4 @@ Some parts stores sell inexpensive belt wear gauges for ribbed belts. If anythin
 
 ## Keep the receipt
 
-A timing belt replacement is one of the most important records on a car with a belt engine. Used-car buyers ask about it, and without a receipt many assume it hasn't been done. Record the date, the mileage and what was replaced. See [keeping service records for resale](/guides/car-service-records-for-resale/), and the [car maintenance schedule by mileage](/guides/car-maintenance-schedule-by-mileage/) for where both belts fit.
+A timing belt replacement is one of the most important records on a car with a belt engine. Used-car buyers ask about it, and without a receipt many assume it hasn't been done. If you buy a car with a timing belt and no proof it was replaced, treat it as overdue and have a shop check it, since the safe interval depends on both mileage and age. Record the date, the mileage and what was replaced. See [keeping service records for resale](/guides/car-service-records-for-resale/), and the [car maintenance schedule by mileage](/guides/car-maintenance-schedule-by-mileage/) for where both belts fit.

@@ -9,7 +9,7 @@ faq:
   - q: "Is a cabin air filter the same as a pollen filter?"
     a: "Yes. 'Pollen filter' is another name for the cabin air filter, the one that cleans the air coming into the passenger area. It's different from the engine air filter, which cleans the air the engine breathes."
   - q: "What happens if you never change the cabin air filter?"
-    a: "Airflow from the vents gets weaker, the air conditioning and defroster work less well, and the filter can start to smell musty. It doesn't harm the engine, but it makes the cabin less comfortable and can make foggy windows slower to clear."
+    a: "Airflow from the vents gets weaker, the air conditioning and defroster work less well, and the filter can start to smell musty. It doesn't harm the engine, but it can make windows slower to defog, which affects visibility, and it makes the cabin less comfortable."
   - q: "Can I clean a cabin air filter instead of replacing it?"
     a: "Most cabin filters are disposable paper or fiber elements made to be replaced, not cleaned. Tapping out loose debris doesn't restore them. Replace it with the type your manual specifies."
 ---
@@ -24,7 +24,7 @@ The cabin air filter, also called the pollen filter, cleans the air that comes t
 
 Air comes into the car from outside, usually near the base of the windshield, and passes through the cabin filter before it reaches the vents. The filter traps dust, pollen, leaves and other particles. Some filters add a layer of activated carbon to reduce odors and fumes.
 
-Most cars made in roughly the last two decades have one, but not every older car does. Your owner's manual will say whether yours has a cabin filter and where it is.
+Most modern cars have one, though some older and some base-model cars don't. Your owner's manual will say whether yours has a cabin filter and where it is.
 
 It's separate from the engine air filter, which cleans the air going into the engine. The two are often changed at similar intervals, but they're different parts in different places.
 
@@ -59,7 +59,7 @@ A new cabin filter fixes most weak-airflow and dusty-smell complaints, but not a
 - **Weak airflow on every setting, even with a new filter**, can point to a failing blower motor or its resistor, or a blocked air intake.
 - **Air coming from the wrong vents** usually means a stuck blend or mode door, not the filter.
 - **A musty smell when the air conditioning starts** often comes from moisture on the AC evaporator, not the filter. Some drivers switch the AC off and leave the fan running for the last few minutes of a drive to help it dry out; your manual may have its own advice.
-- **A sweet smell inside the car** can mean a coolant leak from the heater core. Have that checked; it's not a filter problem.
+- **A sweet smell inside the car, or an oily film on the inside of the windshield,** can mean a coolant leak from the heater core. Coolant fumes shouldn't be breathed, and low coolant can overheat the engine, so have it checked soon. It's not a filter problem.
 
 If a new filter doesn't help, mention these symptoms to a shop rather than buying another filter.
 
@@ -70,7 +70,7 @@ On many cars the cabin filter sits behind the glovebox. Typically you empty the 
 The owner's manual usually shows the exact steps. A few tips:
 
 - **Note the airflow arrow.** Filters have an arrow showing which way the air should flow. Fit the new one the same way as the old.
-- **Use the right size and type.** Carbon filters cost a little more and help with smells; plain particle filters are fine for most drivers.
+- **Use the right size and type.** Carbon filters cost a little more and may help with odors and fumes; plain particle filters work for many drivers. Choose one that fits your car's housing.
 - **Clear the area.** If there are leaves or debris around the filter housing or the outside air intake, remove them while you're there.
 
 If you'd rather a shop did it, ask to see the old filter. A dirty filter is gray or black and may have leaves trapped in it.
