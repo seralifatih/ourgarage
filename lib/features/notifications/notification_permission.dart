@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/widgets/readable_width.dart';
 import '../../services/notification_service_provider.dart';
 
 /// Whether notifications can be shown right now: true, false (declined or
@@ -61,7 +62,10 @@ class NotificationsOffBanner extends ConsumerWidget {
     final scheme = theme.colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      padding: readablePadding(
+        context,
+        const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      ),
       child: Material(
         color: scheme.secondaryContainer,
         borderRadius: BorderRadius.circular(12),

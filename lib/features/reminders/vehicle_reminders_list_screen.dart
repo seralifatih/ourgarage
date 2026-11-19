@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app_routes.dart';
+import '../../core/widgets/readable_width.dart';
 import '../../core/widgets/load_error_view.dart';
 import '../../data/models/service_type.dart';
 import '../../data/repositories/providers.dart';
@@ -107,7 +108,10 @@ class _RemindersList extends ConsumerWidget {
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: readablePadding(
+        context,
+        const EdgeInsets.symmetric(vertical: 8),
+      ),
       itemCount: rows.length,
       separatorBuilder: (_, _) => const Divider(height: 1),
       itemBuilder: (context, index) {

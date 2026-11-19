@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/widgets/readable_width.dart';
 import '../../core/widgets/load_error_view.dart';
 import '../../data/local/database.dart';
 import '../../data/models/service_type.dart';
@@ -199,7 +200,10 @@ class _ReminderRuleFormState extends ConsumerState<_ReminderRuleForm> {
         // every field as soon as any one is touched.
         onChanged: _revalidate,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+          padding: readablePadding(
+            context,
+            const EdgeInsets.fromLTRB(16, 16, 16, 32),
+          ),
           children: [
             DropdownButtonFormField<ServiceType>(
               initialValue: _type,

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app_routes.dart';
+import '../../core/widgets/readable_width.dart';
 import '../../core/widgets/load_error_view.dart';
 import '../../data/local/database.dart';
 import '../../data/repositories/premium_status_provider.dart';
@@ -103,6 +104,7 @@ class _VehicleDetailView extends ConsumerWidget {
         ],
       ),
       body: ListView(
+        padding: readablePadding(context, EdgeInsets.zero),
         children: [
           VehicleDetailHeader(
             vehicle: vehicle,

@@ -7,6 +7,7 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../app_routes.dart';
+import '../../core/widgets/readable_width.dart';
 import '../../core/constants.dart';
 import '../../services/purchase_service_provider.dart';
 import '../../services/review_prompt_service.dart';
@@ -159,7 +160,14 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
       ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+          // Wider than forms: any narrower and the two plan cards wrap
+          // their prices onto extra lines, pushing Unlock and Restore
+          // purchases below the fold on a landscape iPad.
+          padding: readablePadding(
+            context,
+            const EdgeInsets.fromLTRB(24, 8, 24, 24),
+            maxWidth: 720,
+          ),
           children: [
             Text(
               'Unlock your whole garage',

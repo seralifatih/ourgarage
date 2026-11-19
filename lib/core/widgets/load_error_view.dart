@@ -61,7 +61,8 @@ class _LoadErrorViewState extends State<LoadErrorView> {
     }
 
     return Center(
-      child: Padding(
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 480),
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app_routes.dart';
+import '../../core/widgets/readable_width.dart';
 import '../../core/widgets/load_error_view.dart';
 import '../../core/theme.dart';
 import '../../data/local/database.dart';
@@ -79,7 +80,10 @@ class _UpdateOdometersFormState extends ConsumerState<_UpdateOdometersForm> {
       key: _formKey,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+        padding: readablePadding(
+          context,
+          const EdgeInsets.fromLTRB(16, 16, 16, 32),
+        ),
         children: [
           Text(
             'Enter what each one reads now. Anything you leave unchanged is '

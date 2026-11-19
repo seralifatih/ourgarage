@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app_routes.dart';
 import '../../core/constants.dart';
+import '../../core/widgets/readable_width.dart';
 import '../../data/local/database.dart';
 import '../../data/models/service_type.dart';
 import '../../data/repositories/database_holder.dart';
@@ -60,6 +61,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ),
       body: ListView(
+        padding: readablePadding(context, EdgeInsets.zero),
         children: [
           const _PurchasesSection(),
           const _NotificationsSection(),
