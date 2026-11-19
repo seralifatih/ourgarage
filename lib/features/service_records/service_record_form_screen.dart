@@ -15,6 +15,7 @@ import '../../services/review_prompt_service.dart';
 import '../reminders/reminder_engine.dart';
 import '../reminders/reminder_engine_adapter.dart';
 import '../reminders/reminder_notification_scheduler.dart';
+import '../reminders/reminder_status_label.dart';
 import 'currency_default.dart';
 import 'widgets/premium_cost_field.dart';
 
@@ -340,7 +341,10 @@ class _ServiceRecordFormState extends ConsumerState<_ServiceRecordForm> {
             currency: Value(currency),
           );
 
-      if (mounted) context.pop();
+      if (!mounted) return;
+      final messenger = ScaffoldMessenger.of(context);
+      context.pop();
+      _report(messenger, 'Service record updated');
       return;
     }
 
@@ -357,9 +361,7 @@ class _ServiceRecordFormState extends ConsumerState<_ServiceRecordForm> {
           currency: currency,
         );
 
-    final completedDueReminder = await _completeMatchingReminder(
-      odometer: odometer,
-    );
+    final reset = await _completeMatchingReminder(odometer: odometer);
 
     // Captured before popping: this State is disposed once the screen closes.
     final repository = ref.read(serviceRecordRepositoryProvider);
@@ -373,11 +375,15 @@ class _ServiceRecordFormState extends ConsumerState<_ServiceRecordForm> {
     }
 
     if (!mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
     context.pop(recordId);
+    // Saving quietly resets the matching reminder; say so, or the core loop
+    // of the app happens where nobody can see it.
+    _report(messenger, serviceSavedMessage(reset));
 
     final trigger = isFirstRecord
         ? ReviewTrigger.firstServiceRecord
-        : completedDueReminder
+        : reset?.wasDue ?? false
         ? ReviewTrigger.dueReminderCompleted
         : null;
     if (trigger != null) {
@@ -394,9 +400,13 @@ class _ServiceRecordFormState extends ConsumerState<_ServiceRecordForm> {
   /// change should never have to separately tell the app "the oil change
   /// reminder is handled" — saving the record does that silently.
   ///
-  /// Returns whether the rule it completed was due (due now or overdue) at
-  /// the moment of saving — the "reminder done" moment for the review prompt.
-  Future<bool> _completeMatchingReminder({required int? odometer}) async {
+  /// Returns what was reset, or null when no rule matched. [ReminderReset]
+  /// says whether the rule was due (due now or overdue) at the moment of
+  /// saving — the "reminder done" moment for the review prompt — and when it
+  /// comes due next, for the confirmation shown after saving.
+  Future<ReminderReset?> _completeMatchingReminder({
+    required int? odometer,
+  }) async {
     final ruleRepository = ref.read(reminderRuleRepositoryProvider);
     final rules = await ruleRepository
         .watchRulesForVehicle(widget.vehicle.id)
@@ -407,7 +417,7 @@ class _ServiceRecordFormState extends ConsumerState<_ServiceRecordForm> {
         .where((rule) => ServiceType.fromName(rule.type) == _type)
         .firstOrNull;
 
-    if (matchingRule == null) return false;
+    if (matchingRule == null) return null;
 
     // Measured before marking done, which resets the interval.
     final urgency = ReminderEngine.compute(
@@ -424,8 +434,71 @@ class _ServiceRecordFormState extends ConsumerState<_ServiceRecordForm> {
         .read(reminderNotificationSchedulerProvider)
         .rescheduleForRule(matchingRule.id);
 
-    return wasDue;
+    // Re-read both: marking done re-based the rule, and a record with a
+    // higher reading has just advanced the vehicle's odometer.
+    final rule = await ruleRepository.getRule(matchingRule.id) ?? matchingRule;
+    final vehicle =
+        await ref
+            .read(vehicleRepositoryProvider)
+            .getVehicle(widget.vehicle.id) ??
+        widget.vehicle;
+    final next = ReminderEngine.compute(
+      rule: rule.toEngineInput(),
+      vehicle: vehicle.toEngineContext(),
+      now: DateTime.now(),
+    );
+
+    final type = ServiceType.fromName(rule.type);
+    return ReminderReset(
+      wasDue: wasDue,
+      typeLabel: type == ServiceType.custom
+          ? (rule.customTypeLabel ?? type.label)
+          : type.label,
+      nextDue: ReminderStatusLabel.format(
+        next,
+        distanceUnit: vehicle.odometerUnit,
+      ),
+    );
   }
+
+  static void _report(ScaffoldMessengerState messenger, String message) {
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+}
+
+/// What saving a service record did to the matching reminder.
+@visibleForTesting
+class ReminderReset {
+  const ReminderReset({
+    required this.wasDue,
+    required this.typeLabel,
+    required this.nextDue,
+  });
+
+  /// Whether the rule was due or overdue just before this save.
+  final bool wasDue;
+
+  /// The rule's name, e.g. "Oil change".
+  final String typeLabel;
+
+  /// Its status after the reset, as [ReminderStatusLabel] words it.
+  final String nextDue;
+}
+
+/// The confirmation shown once a new service record is saved, e.g.
+/// "Service saved. Oil change reminder reset — next due May 2027."
+@visibleForTesting
+String serviceSavedMessage(ReminderReset? reset) {
+  if (reset == null) return 'Service saved';
+
+  final head = 'Service saved. ${reset.typeLabel} reminder reset';
+  // "Due May 2027" / "Due in 8000 km" read naturally after "next"; anything
+  // else (no schedule, an odd overdue) is left out rather than garbled.
+  final nextDue = reset.nextDue;
+  if (!nextDue.startsWith('Due ') || nextDue == 'Due now') return '$head.';
+  return '$head — next ${nextDue.replaceFirst('Due', 'due')}.';
 }
 
 class _DatePickerField extends StatelessWidget {
