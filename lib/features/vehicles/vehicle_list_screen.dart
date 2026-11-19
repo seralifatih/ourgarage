@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../app_routes.dart';
 import '../../data/local/database.dart';
 import '../../services/review_prompt_service.dart';
+import 'add_vehicle_gate.dart';
 import 'vehicle_list_providers.dart';
 import 'widgets/odometer_update_sheet.dart';
 import 'widgets/vehicle_card.dart';
@@ -38,7 +39,9 @@ class VehicleListScreen extends ConsumerWidget {
           return _ErrorView(error: error);
         },
         data: (list) => list.isEmpty
-            ? VehicleListEmptyState(onAddVehicle: () => _addVehicle(context))
+            ? VehicleListEmptyState(
+                onAddVehicle: () => openAddVehicle(context, ref),
+              )
             : _VehicleList(entries: list),
       ),
       floatingActionButton: entries.maybeWhen(
@@ -47,17 +50,13 @@ class VehicleListScreen extends ConsumerWidget {
         data: (list) => list.isEmpty
             ? null
             : FloatingActionButton.extended(
-                onPressed: () => _addVehicle(context),
+                onPressed: () => openAddVehicle(context, ref),
                 icon: const Icon(Icons.add),
                 label: const Text('Add vehicle'),
               ),
         orElse: () => null,
       ),
     );
-  }
-
-  void _addVehicle(BuildContext context) {
-    context.push(AppRoutes.addVehicle);
   }
 }
 

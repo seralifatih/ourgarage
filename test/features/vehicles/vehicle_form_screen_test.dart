@@ -413,6 +413,62 @@ void main() {
       },
     );
 
+    testWidgets(
+      'closing the paywall from the backstop keeps what was typed',
+      (tester) async {
+        await db
+            .into(db.vehicles)
+            .insert(
+              VehiclesCompanion.insert(
+                id: 'existing',
+                nickname: 'Old Truck',
+                odometerUnit: 'km',
+                createdAt: DateTime(2026, 1, 1),
+                updatedAt: DateTime(2026, 1, 1),
+              ),
+            );
+
+        await tester.pumpWidget(
+          ProviderScope(child: MaterialApp.router(routerConfig: appRouter)),
+        );
+        await tester.pump();
+
+        appRouter.go(AppRoutes.addVehicle);
+        await tester.pump();
+        await tester.pump();
+
+        await tester.enterText(
+          find.widgetWithText(TextFormField, 'Nickname'),
+          'Second Car',
+        );
+        await tester.enterText(
+          find.widgetWithText(TextFormField, 'Current odometer'),
+          '500',
+        );
+        await tester.pump();
+
+        await tester.tap(_saveButton('Add vehicle'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+        for (var i = 0; i < 10; i++) {
+          await tester.pump(const Duration(milliseconds: 50));
+        }
+        expect(find.text('Unlock your whole garage'), findsOneWidget);
+
+        await tester.tap(find.byTooltip('Close'));
+        for (var i = 0; i < 10; i++) {
+          await tester.pump(const Duration(milliseconds: 50));
+        }
+
+        expect(find.text('Second Car'), findsOneWidget);
+        expect(_isEnabled(tester, _saveButton('Add vehicle')), isTrue);
+
+        appRouter.go(AppRoutes.vehicleList);
+        await tester.pump();
+        await _drainPendingTimers(tester);
+      },
+    );
+
     testWidgets('does not check countActiveVehicles when premium', (
       tester,
     ) async {

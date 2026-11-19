@@ -5,11 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app_routes.dart';
-import '../../core/constants.dart';
 import '../../data/local/database.dart';
-import '../../data/repositories/premium_status_provider.dart';
 import '../../data/repositories/providers.dart';
 import '../../data/repositories/stream_providers.dart';
+import 'add_vehicle_gate.dart';
 import 'odometer_unit.dart';
 import 'widgets/default_reminders_sheet.dart';
 
@@ -325,17 +324,15 @@ class _VehicleFormState extends ConsumerState<_VehicleForm> {
       return;
     }
 
-    // Free-tier gate: the single source of truth for premium status is
-    // premiumStatusProvider, checked here and nowhere else in this flow.
-    final isPremium = ref.read(premiumStatusProvider);
-    if (!isPremium) {
-      final activeCount = await ref
-          .read(vehicleRepositoryProvider)
-          .countActiveVehicles();
-      if (activeCount >= AppConstants.freeVehicleLimit) {
-        if (mounted) context.go(AppRoutes.paywall);
-        return;
-      }
+    // Backstop for the free-tier gate. The real check runs before the form
+    // opens (see openAddVehicle); this one only catches a deep link or a
+    // second device adding a vehicle meanwhile. Pushed, not gone to, so the
+    // form and what was typed into it are still here after the paywall.
+    if (!await canAddVehicle(ref)) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      await context.push(AppRoutes.paywall);
+      return;
     }
 
     final newId = await ref
