@@ -172,6 +172,14 @@ class _ReminderRuleFormState extends ConsumerState<_ReminderRuleForm> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.isEditing ? 'Edit reminder' : 'Add reminder'),
+        actions: [
+          if (widget.isEditing)
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              tooltip: 'Delete reminder',
+              onPressed: _saving ? null : _delete,
+            ),
+        ],
       ),
       body: Form(
         key: _formKey,
@@ -317,6 +325,40 @@ class _ReminderRuleFormState extends ConsumerState<_ReminderRuleForm> {
       return 'Enter a reading of 0 or more';
     }
     return null;
+  }
+
+  /// Deletes this rule, with Undo in a snackbar rather than a confirmation:
+  /// the same safety net as deleting a service record.
+  ///
+  /// Pops first: the screen around this form watches the rule list, and once
+  /// the rule is gone it would swap this form out for "Reminder not found"
+  /// before the pop could run.
+  Future<void> _delete() async {
+    final repository = ref.read(reminderRuleRepositoryProvider);
+    final scheduler = ref.read(reminderNotificationSchedulerProvider);
+    final messenger = ScaffoldMessenger.of(context);
+    final ruleId = widget.initial!.id;
+
+    context.pop();
+
+    await repository.softDeleteRule(ruleId);
+    // Cancels its pending notification: the rule is deleted now.
+    await scheduler.rescheduleForRule(ruleId);
+
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: const Text('Reminder deleted'),
+          action: SnackBarAction(
+            label: 'Undo',
+            onPressed: () async {
+              await repository.restoreRule(ruleId);
+              await scheduler.rescheduleForRule(ruleId);
+            },
+          ),
+        ),
+      );
   }
 
   Future<void> _save() async {

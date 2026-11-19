@@ -129,6 +129,11 @@ class ReminderRuleRepository {
     return _dao.softDeleteRule(id, _now());
   }
 
+  /// Undoes [softDeleteRule].
+  Future<bool> restoreRule(String id) {
+    return _dao.restoreRule(id, _now());
+  }
+
   /// Marks the rule as serviced, which re-bases the next due date/distance.
   Future<bool> markRuleDone(String ruleId, DateTime doneAt, int? doneOdometer) {
     return _dao.updateRule(

@@ -104,4 +104,31 @@ class ReminderRuleDao extends DatabaseAccessor<AppDatabase>
       return true;
     });
   }
+
+  /// Clears a rule's tombstone — the undo for [softDeleteRule].
+  ///
+  /// Matches only rows that *are* deleted, so an undo can find its target.
+  /// Synced as an ordinary upsert with a newer updatedAt, so last-write-wins
+  /// lets it beat the delete it undoes.
+  Future<bool> restoreRule(String id, DateTime updatedAt) {
+    return transaction(() async {
+      final updated =
+          await (update(
+            reminderRules,
+          )..where((r) => r.id.equals(id) & r.deletedAt.isNotNull())).write(
+            ReminderRulesCompanion(
+              deletedAt: const Value(null),
+              updatedAt: Value(updatedAt),
+            ),
+          );
+      if (updated == 0) return false;
+
+      await attachedDatabase.enqueueReminderRule(
+        id,
+        SyncOperation.upsert,
+        updatedAt,
+      );
+      return true;
+    });
+  }
 }
