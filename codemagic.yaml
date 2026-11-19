@@ -2,7 +2,8 @@
 #
 # The point of this file is that shipping iOS requires no Mac and no local
 # certificates. Signing happens through the App Store Connect API key
-# integration; nothing secret lives in the repository.
+# integration (ios-adhoc also needs CERTIFICATE_PRIVATE_KEY from an env
+# group); nothing secret lives in the repository.
 #
 # Two workflows:
 #   ios-release  — automatic on master, straight to TestFlight
@@ -45,6 +46,7 @@ definitions:
   #   supabase       SUPABASE_URL, SUPABASE_ANON_KEY
   #   revenuecat     REVENUECAT_IOS_KEY
   #   appstore       APP_STORE_APPLE_ID
+  #   adhoc_signing  CERTIFICATE_PRIVATE_KEY (ios-adhoc only)
   #
   # Nothing here is committed. The Supabase anon key is a publishable client
   # credential and is safe in the shipped binary — every table it can reach is
@@ -112,9 +114,10 @@ definitions:
     - &use_profiles
       name: Apply signing profiles to Xcode project
       script: xcode-project use-profiles
-      # The `ios_signing` block only installs the certificate and profile on
-      # the build machine; it does not touch the Xcode project. Runner is set
-      # to Automatic signing with no team, so without this step
+      # The `ios_signing` block (or, in ios-adhoc, the CLI fetch step) only
+      # installs the certificate and profile on the build machine; it does
+      # not touch the Xcode project. Runner is set to Automatic signing with
+      # no team, so without this step
       # `flutter build ipa` finds nothing to sign with ("No valid code signing
       # certificates were found"). This switches the project to manual
       # signing with the installed profile and writes the export options
@@ -403,11 +406,33 @@ workflows:
   # Connect, so it consumes no TestFlight build number; the build number is
   # whatever pubspec.yaml says.
   #
-  # Before the first run, the iPad's UDID must be registered under
-  # Certificates, Identifiers & Profiles → Devices. An Ad Hoc profile only
-  # installs on devices it lists, and Codemagic creates/refreshes the profile
-  # from the devices registered at build time — a device registered later
-  # needs a new build.
+  # Signing is done by the codemagic CLI in the scripts below, not by an
+  # `ios_signing:` block. That block only uses certificates stored in
+  # Codemagic's code signing identities, and no .p12 is stored there, so it
+  # failed with "No matching certificate found for every requested profile".
+  # Here the certificate comes from CERTIFICATE_PRIVATE_KEY instead, and the
+  # Ad Hoc profile is fetched or created on every build through the App Store
+  # Connect integration. No profile has to be uploaded by hand.
+  #
+  # One-time setup:
+  #   1. Register the iPad's UDID under Certificates, Identifiers & Profiles →
+  #      Devices. An Ad Hoc profile only installs on devices it lists.
+  #   2. Create an environment variable group `adhoc_signing` with one secure
+  #      variable, CERTIFICATE_PRIVATE_KEY: an RSA private key, e.g. from
+  #        ssh-keygen -t rsa -b 2048 -m PEM -f adhoc_key -q -N ""
+  #      If no Apple Distribution certificate matches the key yet, the first
+  #      build creates one, which counts toward Apple's limit on distribution
+  #      certificates. Keep the key: the same key keeps reusing that
+  #      certificate.
+  #   3. The "OurGarage ASC Key" API key needs the Admin or App Manager role;
+  #      a lower role can't create certificates or profiles (403 at --create).
+  #
+  # Only the Runner bundle id is fetched; the app has no extensions. Adding
+  # one (a widget, say) needs its bundle id fetched here too.
+  #
+  # Adding a device later: an existing Ad Hoc profile for this certificate is
+  # reused as it is. Delete it under Profiles so the next build creates a new
+  # one that lists every registered device.
   #
   # The release and debug workflows above are untouched; this one reuses the
   # shared anchors only.
@@ -417,17 +442,17 @@ workflows:
 
     environment:
       <<: *environment
-      groups: *groups
-      ios_signing:
-        # Fetches (or creates) an IOS_APP_ADHOC profile for the bundle id
-        # through the integration below, with the distribution certificate
-        # the other workflows already use.
-        distribution_type: ad_hoc
-        bundle_identifier: com.ourgarage.ourgarage
+      groups:
+        - supabase
+        - revenuecat
+        - appstore
+        - adhoc_signing # CERTIFICATE_PRIVATE_KEY
       vars:
         BUNDLE_ID: com.ourgarage.ourgarage
 
     integrations:
+      # Gives the app-store-connect CLI its API credentials, the same way
+      # `get-latest-testflight-build-number` gets them in the workflows above.
       app_store_connect: OurGarage ASC Key
 
     # No `triggering:` block — started by hand, on any branch.
@@ -441,6 +466,19 @@ workflows:
       - *analyze
       - *test
       - *pod_install
+
+      - name: Fetch Ad Hoc signing files
+        script: |
+          keychain initialize
+          # --create: makes the distribution certificate for this key and an
+          # IOS_APP_ADHOC profile if either is missing. A new profile lists
+          # the devices registered at that moment.
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_ADHOC \
+            --certificate-key=@env:CERTIFICATE_PRIVATE_KEY \
+            --create
+          keychain add-certificates
+
       - *use_profiles
 
       - name: Check export method is ad hoc

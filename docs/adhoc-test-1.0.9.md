@@ -16,9 +16,17 @@ yazıldı. Her adımın yanına ✅ / ❌ koyup not düşebilirsin.
    iTunes → cihaz → seri numarasına tıklayınca UDID görünür.
 2. developer.apple.com → Certificates, Identifiers & Profiles → Devices →
    "+" → iPad'i UDID ile ekle.
-3. Kayıt, Ad Hoc build **başlamadan önce** yapılmış olmalı. Codemagic profili
-   build sırasında kayıtlı cihazlarla oluşturur. Sonradan eklenen bir cihaz
-   için yeni build gerekir.
+3. Kayıt, Ad Hoc build **başlamadan önce** yapılmış olmalı. Build, profili
+   ilk seferde o anda kayıtlı cihazlarla oluşturur, sonraki build'lerde aynı
+   profili kullanır. Sonradan cihaz eklersen Profiles altındaki Ad Hoc
+   profili sil; bir sonraki build yenisini oluşturur.
+4. Codemagic → Environment variables → `adhoc_signing` grubu → secure
+   `CERTIFICATE_PRIVATE_KEY` (bir kerelik). Anahtar için:
+   `ssh-keygen -t rsa -b 2048 -m PEM -f adhoc_key -q -N ""`, ardından
+   `adhoc_key` dosyasının içeriğini yapıştır. Bu anahtarı sakla. İlk build bu
+   anahtarla yeni bir Apple Distribution sertifikası oluşturabilir.
+5. "OurGarage ASC Key" anahtarının rolü Admin ya da App Manager olmalı.
+   Değilse imzalama adımı 403 verir.
 
 ### 0.2 Build ve kurulum
 
