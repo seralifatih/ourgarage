@@ -38,7 +38,8 @@ Future<void> _drainPendingTimers(WidgetTester tester) async {
 }
 
 bool _enabled(WidgetTester tester, String label) =>
-    tester.widget<FilledButton>(find.widgetWithText(FilledButton, label))
+    tester
+        .widget<FilledButton>(find.widgetWithText(FilledButton, label))
         .onPressed !=
     null;
 
@@ -141,6 +142,37 @@ void main() {
       );
       await tester.pump();
       expect(_enabled(tester, 'Add reminder'), isTrue);
+
+      await _drainPendingTimers(tester);
+    });
+  });
+
+  group('shared interval validator', () {
+    testWidgets('filling one interval clears the error on the other too', (
+      tester,
+    ) async {
+      await insertVehicle();
+      await _pump(tester, const ReminderRuleFormScreen(vehicleId: _vehicleId));
+
+      final months = find.widgetWithText(TextFormField, 'Interval (months)');
+      final distance = find.widgetWithText(
+        TextFormField,
+        'Interval (distance)',
+      );
+      const error = 'Set an interval in months, distance, or both';
+
+      // Touch both, leaving both empty: both show the error.
+      await tester.enterText(distance, '1');
+      await tester.enterText(distance, '');
+      await tester.enterText(months, '1');
+      await tester.enterText(months, '');
+      await tester.pump();
+      expect(find.text(error), findsNWidgets(2));
+
+      // Filling one satisfies the rule for both fields.
+      await tester.enterText(months, '6');
+      await tester.pump();
+      expect(find.text(error), findsNothing);
 
       await _drainPendingTimers(tester);
     });

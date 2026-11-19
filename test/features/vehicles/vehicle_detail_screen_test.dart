@@ -340,6 +340,34 @@ void main() {
         await _drainPendingTimers(tester);
       });
 
+      testWidgets('compares with the stored reading, not the one the sheet '
+          'opened with', (tester) async {
+        await insertVehicle(odometer: 12500);
+        await _pumpDetail(tester);
+
+        await tester.tap(find.widgetWithText(OutlinedButton, 'Update'));
+        await _settle(tester);
+        // Meanwhile a sync moves the stored reading past what is typed next.
+        await tester.runAsync(
+          () => (db.update(db.vehicles)..where((v) => v.id.equals(_vehicleId)))
+              .write(const VehiclesCompanion(odometer: Value(20000))),
+        );
+        await tester.enterText(
+          find.widgetWithText(TextFormField, 'Current reading'),
+          '15000',
+        );
+        await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 100)),
+        );
+        await _settle(tester);
+
+        expect(find.text('Correct a typo?'), findsOneWidget);
+        expect(find.textContaining('20,000 km'), findsWidgets);
+
+        await _drainPendingTimers(tester);
+      });
+
       testWidgets('a higher reading saves without asking', (tester) async {
         await insertVehicle(odometer: 12500);
         await _pumpDetail(tester);

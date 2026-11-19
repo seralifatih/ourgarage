@@ -16,18 +16,48 @@ final notificationPermissionProvider = FutureProvider<bool?>(
 /// The "Turn on" action shared by Settings and the reminders banner.
 ///
 /// Asks first: if the user was never asked, this shows the system prompt.
-/// iOS only ever shows that prompt once, so after a refusal the request
-/// answers false straight away, and the only way left is the Settings app.
-Future<void> turnOnNotifications(WidgetRef ref) async {
+/// iOS only ever shows that prompt once, so after an earlier refusal the
+/// request answers false straight away and the Settings app is the only way
+/// left. The two can't be told apart (iOS reports never-asked and declined
+/// alike), so a false answer offers Settings in a snackbar rather than
+/// opening it: someone who just tapped "Don't Allow" is not thrown into
+/// Settings, and someone who declined long ago is one tap away.
+Future<void> turnOnNotifications(
+  WidgetRef ref,
+  ScaffoldMessengerState messenger,
+) async {
   final notifications = ref.read(notificationServiceProvider);
+  bool? granted;
   try {
-    final granted = await notifications.requestPermissions() ?? false;
-    if (!granted) await notifications.openSettings();
+    granted = await notifications.requestPermissions();
   } catch (error, stack) {
-    debugPrint('Turning on notifications failed: $error\n$stack');
+    debugPrint('Requesting notification permission failed: $error\n$stack');
   } finally {
     ref.invalidate(notificationPermissionProvider);
   }
+  if (granted == true) return;
+
+  messenger
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      SnackBar(
+        content: const Text(
+          'Notifications are off. You can turn them on in Settings.',
+        ),
+        action: SnackBarAction(
+          label: 'Open Settings',
+          onPressed: () async {
+            try {
+              await notifications.openSettings();
+            } catch (error, stack) {
+              debugPrint(
+                'Opening notification settings failed: $error\n$stack',
+              );
+            }
+          },
+        ),
+      ),
+    );
 }
 
 /// Whether the "notifications are off" banner was closed this session.
@@ -54,7 +84,9 @@ class NotificationsOffBanner extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final enabled = ref.watch(notificationPermissionProvider).asData?.value;
+    // `.value`, not `.asData`: every resume re-reads the status, and the
+    // previous answer should stay on screen meanwhile, not blink out.
+    final enabled = ref.watch(notificationPermissionProvider).value;
     final dismissed = ref.watch(notificationBannerDismissedProvider);
     if (enabled != false || dismissed) return const SizedBox.shrink();
 
@@ -88,7 +120,8 @@ class NotificationsOffBanner extends ConsumerWidget {
                 ),
               ),
               TextButton(
-                onPressed: () => turnOnNotifications(ref),
+                onPressed: () =>
+                    turnOnNotifications(ref, ScaffoldMessenger.of(context)),
                 child: const Text('Turn on'),
               ),
               IconButton(

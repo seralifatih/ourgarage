@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ourgarage/data/local/database.dart';
 import 'package:ourgarage/data/repositories/database_holder.dart';
+import 'package:ourgarage/features/notifications/notification_permission.dart';
 import 'package:ourgarage/features/reminders/vehicle_reminders_list_screen.dart';
 import 'package:ourgarage/features/settings/settings_screen.dart';
 
@@ -109,10 +110,12 @@ void main() {
       await _drainPendingTimers(tester);
     });
 
-    testWidgets('Turn on after a refusal opens the Settings app', (
+    testWidgets('a refusal offers the Settings app instead of opening it', (
       tester,
     ) async {
-      // iOS answers a repeat request with false and no prompt.
+      // iOS answers false both right after "Don't Allow" and, with no
+      // prompt, after an earlier refusal; neither should yank the user into
+      // Settings unasked.
       final plugin = FakeNotificationPlugin()
         ..enabled = false
         ..requestResult = false;
@@ -122,7 +125,34 @@ void main() {
       await _settle(tester);
 
       expect(plugin.requestCount, 1);
+      expect(plugin.openSettingsCount, 0);
+      expect(
+        find.text('Notifications are off. You can turn them on in Settings.'),
+        findsOneWidget,
+      );
+
+      await _settle(tester, frames: 20);
+      await tester.tap(find.text('Open Settings'));
+      await _settle(tester);
+
       expect(plugin.openSettingsCount, 1);
+
+      await _drainPendingTimers(tester);
+    });
+
+    testWidgets('the row stays put while a resume re-reads the status', (
+      tester,
+    ) async {
+      final plugin = FakeNotificationPlugin()..enabled = false;
+      await _pump(tester, const SettingsScreen(), plugin);
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(SettingsScreen)),
+      );
+      container.invalidate(notificationPermissionProvider);
+      await tester.pump();
+
+      expect(find.text('Off — reminders can’t alert you'), findsOneWidget);
 
       await _drainPendingTimers(tester);
     });

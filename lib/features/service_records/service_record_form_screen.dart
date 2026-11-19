@@ -12,6 +12,8 @@ import '../../data/local/database.dart';
 import '../../data/models/service_type.dart';
 import '../../data/repositories/premium_status_provider.dart';
 import '../../data/repositories/providers.dart';
+import '../../data/repositories/reminder_rule_repository.dart';
+import '../../data/repositories/vehicle_repository.dart';
 import '../../data/repositories/stream_providers.dart';
 import '../../services/review_prompt_service.dart';
 import '../reminders/reminder_engine.dart';
@@ -364,24 +366,32 @@ class _ServiceRecordFormState extends ConsumerState<_ServiceRecordForm> {
       return;
     }
 
-    final recordId = await ref
-        .read(serviceRecordRepositoryProvider)
-        .createRecord(
-          vehicleId: widget.vehicle.id,
-          performedAt: _performedAt,
-          type: _type,
-          odometer: odometer,
-          customTypeLabel: _type == ServiceType.custom ? customLabel : null,
-          notes: notes.isEmpty ? null : notes,
-          cost: cost,
-          currency: currency,
-        );
-
-    final reset = await _completeMatchingReminder(odometer: odometer);
-
-    // Captured before popping: this State is disposed once the screen closes.
+    // Every provider is read before the first await: the user can swipe the
+    // screen away mid-save, and `ref` throws once this State is disposed.
     final repository = ref.read(serviceRecordRepositoryProvider);
     final reviewPrompt = ref.read(reviewPromptServiceProvider);
+    final rules = ref.read(reminderRuleRepositoryProvider);
+    final vehicles = ref.read(vehicleRepositoryProvider);
+    final scheduler = ref.read(reminderNotificationSchedulerProvider);
+
+    final recordId = await repository.createRecord(
+      vehicleId: widget.vehicle.id,
+      performedAt: _performedAt,
+      type: _type,
+      odometer: odometer,
+      customTypeLabel: _type == ServiceType.custom ? customLabel : null,
+      notes: notes.isEmpty ? null : notes,
+      cost: cost,
+      currency: currency,
+    );
+
+    final reset = await _completeMatchingReminder(
+      odometer: odometer,
+      ruleRepository: rules,
+      vehicleRepository: vehicles,
+      scheduler: scheduler,
+    );
+
     var isFirstRecord = false;
     try {
       isFirstRecord = await repository.countRecords() == 1;
@@ -422,8 +432,10 @@ class _ServiceRecordFormState extends ConsumerState<_ServiceRecordForm> {
   /// comes due next, for the confirmation shown after saving.
   Future<ReminderReset?> _completeMatchingReminder({
     required int? odometer,
+    required ReminderRuleRepository ruleRepository,
+    required VehicleRepository vehicleRepository,
+    required ReminderNotificationScheduler scheduler,
   }) async {
-    final ruleRepository = ref.read(reminderRuleRepositoryProvider);
     final rules = await ruleRepository
         .watchRulesForVehicle(widget.vehicle.id)
         .first;
@@ -446,18 +458,13 @@ class _ServiceRecordFormState extends ConsumerState<_ServiceRecordForm> {
 
     await ruleRepository.markRuleDone(matchingRule.id, _performedAt, odometer);
 
-    await ref
-        .read(reminderNotificationSchedulerProvider)
-        .rescheduleForRule(matchingRule.id);
+    await scheduler.rescheduleForRule(matchingRule.id);
 
     // Re-read both: marking done re-based the rule, and a record with a
     // higher reading has just advanced the vehicle's odometer.
     final rule = await ruleRepository.getRule(matchingRule.id) ?? matchingRule;
     final vehicle =
-        await ref
-            .read(vehicleRepositoryProvider)
-            .getVehicle(widget.vehicle.id) ??
-        widget.vehicle;
+        await vehicleRepository.getVehicle(widget.vehicle.id) ?? widget.vehicle;
     final next = ReminderEngine.compute(
       rule: rule.toEngineInput(),
       vehicle: vehicle.toEngineContext(),

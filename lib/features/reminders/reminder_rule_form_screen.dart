@@ -355,11 +355,27 @@ class _ReminderRuleFormState extends ConsumerState<_ReminderRuleForm> {
     final messenger = ScaffoldMessenger.of(context);
     final ruleId = widget.initial!.id;
 
+    // One delete per form. Flutter already ignores taps on a route while it
+    // pops, so this is a backstop against deleting (and offering Undo) twice.
+    if (_saving) return;
+    setState(() => _saving = true);
     context.pop();
 
-    await repository.softDeleteRule(ruleId);
-    // Cancels its pending notification: the rule is deleted now.
-    await scheduler.rescheduleForRule(ruleId);
+    try {
+      await repository.softDeleteRule(ruleId);
+      // Cancels its pending notification: the rule is deleted now.
+      await scheduler.rescheduleForRule(ruleId);
+    } catch (error, stack) {
+      debugPrint('Deleting reminder $ruleId failed: $error\n$stack');
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text("Couldn't delete the reminder. Please try again."),
+          ),
+        );
+      return;
+    }
 
     messenger
       ..hideCurrentSnackBar()

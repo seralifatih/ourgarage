@@ -156,15 +156,16 @@ class _PurchasesSectionState extends ConsumerState<_PurchasesSection> {
 ///
 /// Without this a declined permission left no trace anywhere: reminders kept
 /// being created and scheduled, and none of them ever appeared. Off offers
-/// "Turn on", which asks if iOS still allows asking and otherwise opens this
-/// app's page in the Settings app. Hidden while the status is loading or
+/// "Turn on", which asks if iOS still allows asking and otherwise offers
+/// this app's page in the Settings app. Hidden while the status is loading or
 /// can't be read.
 class _NotificationsSection extends ConsumerWidget {
   const _NotificationsSection();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final enabled = ref.watch(notificationPermissionProvider).asData?.value;
+    // `.value` keeps the last answer on screen while a resume re-reads it.
+    final enabled = ref.watch(notificationPermissionProvider).value;
     if (enabled == null) return const SizedBox.shrink();
 
     return ListTile(
@@ -178,7 +179,8 @@ class _NotificationsSection extends ConsumerWidget {
       trailing: enabled
           ? null
           : TextButton(
-              onPressed: () => turnOnNotifications(ref),
+              onPressed: () =>
+                  turnOnNotifications(ref, ScaffoldMessenger.of(context)),
               child: const Text('Turn on'),
             ),
     );

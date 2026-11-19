@@ -121,23 +121,30 @@ class _OdometerUpdateSheetState extends ConsumerState<OdometerUpdateSheet> {
 
     final value = int.parse(_controller.text.trim());
 
-    // Odometers don't run backwards, so a lower value is either a typo now or
-    // the correction of an earlier one. Without this path an over-entered
-    // reading (1285000 for 128500) could never be undone, and every distance
-    // reminder would stay wrong for good.
-    if (value < widget.vehicle.odometer && !await _confirmCorrection(value)) {
-      return;
-    }
-    if (!mounted) return;
-
-    setState(() => _saving = true);
-
     // Every provider is read before the first await; the sheet may close
     // while the writes are still in flight.
     final vehicles = ref.read(vehicleRepositoryProvider);
     final scheduler = ref.read(reminderNotificationSchedulerProvider);
     final nudge = ref.read(odometerNudgeServiceProvider);
     final messenger = ScaffoldMessenger.of(context);
+
+    // Compared against the stored reading, not the one this sheet opened
+    // with: a sync or a service record may have moved it since.
+    final current =
+        (await vehicles.getVehicle(widget.vehicle.id))?.odometer ??
+        widget.vehicle.odometer;
+    if (!mounted) return;
+
+    // Odometers don't run backwards, so a lower value is either a typo now or
+    // the correction of an earlier one. Without this path an over-entered
+    // reading (1285000 for 128500) could never be undone, and every distance
+    // reminder would stay wrong for good.
+    if (value < current && !await _confirmCorrection(value, current)) {
+      return;
+    }
+    if (!mounted) return;
+
+    setState(() => _saving = true);
 
     try {
       await vehicles.updateOdometer(widget.vehicle.id, value);
@@ -170,7 +177,7 @@ class _OdometerUpdateSheetState extends ConsumerState<OdometerUpdateSheet> {
   }
 
   /// Asks before saving a reading lower than the current one.
-  Future<bool> _confirmCorrection(int value) async {
+  Future<bool> _confirmCorrection(int value, int current) async {
     final unit = widget.vehicle.odometerUnit;
     final confirmed = await showDialog<bool>(
       context: context,
@@ -178,7 +185,7 @@ class _OdometerUpdateSheetState extends ConsumerState<OdometerUpdateSheet> {
         title: const Text('Correct a typo?'),
         content: Text(
           '${formatOdometer(value)} $unit is lower than the current reading, '
-          '${formatOdometer(widget.vehicle.odometer)} $unit.\n\n'
+          '${formatOdometer(current)} $unit.\n\n'
           'Odometers only go up, so only do this to fix a reading that was '
           'entered wrong. Reminders are recalculated from the corrected '
           'value.',
