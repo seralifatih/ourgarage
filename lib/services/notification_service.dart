@@ -298,7 +298,7 @@ class NotificationService {
       id: reminderNotificationId(ruleId),
       scheduledDate: scheduledAt,
       title: '$vehicleNickname: $typeLabel due',
-      body: 'Tap to log it or snooze.',
+      body: 'Tap to log it.',
       notificationDetails: _reminderDetails,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       payload: jsonEncode({'vehicleId': vehicleId, 'ruleId': ruleId}),

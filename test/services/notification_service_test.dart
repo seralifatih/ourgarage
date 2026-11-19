@@ -184,7 +184,7 @@ void main() {
       await schedule(nickname: 'Blue Civic', typeLabel: 'Oil change');
 
       expect(plugin.scheduled.single.title, 'Blue Civic: Oil change due');
-      expect(plugin.scheduled.single.body, 'Tap to log it or snooze.');
+      expect(plugin.scheduled.single.body, 'Tap to log it.');
     });
 
     test('derives the id from the base plus a stable hash', () async {
