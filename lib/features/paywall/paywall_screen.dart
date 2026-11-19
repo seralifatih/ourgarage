@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -11,7 +10,9 @@ import '../../app_routes.dart';
 import '../../core/constants.dart';
 import '../../services/purchase_service_provider.dart';
 import '../../services/review_prompt_service.dart';
+import '../../services/feedback_email.dart';
 import 'paywall_providers.dart';
+import 'purchase_errors.dart';
 
 /// Which of the two products the user is about to buy.
 enum _Plan { lifetime, annual }
@@ -81,18 +82,18 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
       }
       // Not entitled and no error: the user backed out of the store sheet,
       // which needs no message of its own.
-    } on PlatformException catch (error) {
-      reviewPrompt.markBadMoment();
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(content: Text(error.message ?? 'Purchase failed')),
-        );
-    } on Object {
-      // Any other failure is still a failed purchase; behaviour is otherwise
-      // unchanged, so it propagates as before.
-      reviewPrompt.markBadMoment();
-      rethrow;
+    } catch (error, stack) {
+      // Every failure gets a message: a rethrow here used to leave anything
+      // that wasn't a PlatformException with no feedback at all.
+      debugPrint('Purchase failed: $error\n$stack');
+      if (isPurchasePending(error)) {
+        // Ask to Buy: the purchase is with a parent, not failed. They stay
+        // here; premium arrives through the entitlement stream once approved.
+        showPurchasePending(messenger);
+      } else {
+        reviewPrompt.markBadMoment();
+        showPurchaseError(messenger, error, restoring: false);
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -117,15 +118,10 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
           ),
         );
       if (isPremium) _close(context);
-    } on PlatformException catch (error) {
+    } catch (error, stack) {
+      debugPrint('Restore failed: $error\n$stack');
       ref.read(reviewPromptServiceProvider).markBadMoment();
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: Text(error.message ?? 'Could not restore purchases'),
-          ),
-        );
+      showPurchaseError(messenger, error, restoring: true);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -205,6 +201,13 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                   OutlinedButton(
                     onPressed: () => ref.invalidate(currentOfferingProvider),
                     child: const Text('Try again'),
+                  ),
+                  TextButton(
+                    onPressed: () => openFeedbackEmail(
+                      ScaffoldMessenger.of(context),
+                      subject: 'OurGarage purchases unavailable',
+                    ),
+                    child: const Text('Message me'),
                   ),
                 ],
               )

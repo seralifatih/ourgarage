@@ -19,6 +19,7 @@ class FakePurchasesApi implements PurchasesApi {
     this.restoreGrantsPremium,
     this.offerings,
     this.purchaseError,
+    this.restoreError,
   });
 
   /// What [getOfferings] returns. Defaults to [defaultOfferings] — a lifetime
@@ -27,7 +28,12 @@ class FakePurchasesApi implements PurchasesApi {
   final Offerings? offerings;
 
   /// When set, [purchase] throws it instead of granting the entitlement.
-  final PlatformException? purchaseError;
+  /// Usually a [PlatformException]; anything else models an unexpected
+  /// failure.
+  final Object? purchaseError;
+
+  /// When set, [restorePurchases] throws it.
+  final Object? restoreError;
 
   /// The package handed to the last [purchase] call.
   Package? lastPurchased;
@@ -92,6 +98,8 @@ class FakePurchasesApi implements PurchasesApi {
   @override
   Future<CustomerInfo> restorePurchases() async {
     restoreCount++;
+    final error = restoreError;
+    if (error != null) throw error;
     isPremium = restoreGrantsPremium ?? isPremium;
     return _customerInfo(isPremium);
   }

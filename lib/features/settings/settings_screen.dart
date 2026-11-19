@@ -1,12 +1,8 @@
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:package_info_plus/package_info_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../app_routes.dart';
 import '../../core/constants.dart';
@@ -17,6 +13,7 @@ import '../../data/repositories/premium_status_provider.dart';
 import '../../data/repositories/providers.dart';
 import '../../services/auth_service.dart';
 import '../../services/auth_service_provider.dart';
+import '../../services/feedback_email.dart';
 import '../../services/notification_service_provider.dart';
 import '../../debug/demo_data.dart';
 import '../account/account_deletion_service.dart';
@@ -24,6 +21,7 @@ import '../export/export_service.dart';
 import '../notifications/notification_permission.dart';
 import '../../services/purchase_service_provider.dart';
 import '../paywall/paywall_providers.dart';
+import '../paywall/purchase_errors.dart';
 
 /// App settings.
 ///
@@ -99,21 +97,25 @@ class _PurchasesSectionState extends ConsumerState<_PurchasesSection> {
 
     setState(() => _restoring = true);
 
-    String message;
     try {
       final isPremium = await purchases.restorePurchases();
-      message = isPremium
-          ? 'Purchases restored'
-          : 'No previous purchases found';
-    } on PlatformException catch (error) {
-      message = error.message ?? 'Could not restore purchases';
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              isPremium ? 'Purchases restored' : 'No previous purchases found',
+            ),
+          ),
+        );
+    } catch (error, stack) {
+      // Any failure, not only a PlatformException: anything else used to
+      // escape with no message at all.
+      debugPrint('Restore failed: $error\n$stack');
+      showPurchaseError(messenger, error, restoring: true);
     } finally {
       if (mounted) setState(() => _restoring = false);
     }
-
-    messenger
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -377,46 +379,6 @@ class _HouseholdSection extends ConsumerWidget {
 class _FeedbackSection extends StatelessWidget {
   const _FeedbackSection();
 
-  Future<void> _open(BuildContext context, Uri uri) async {
-    final messenger = ScaffoldMessenger.of(context);
-    var opened = false;
-    try {
-      opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } catch (error) {
-      debugPrint('Could not open $uri: $error');
-    }
-    if (!opened) {
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(const SnackBar(content: Text('Could not open link')));
-    }
-  }
-
-  /// A mailto with the app and OS version prefilled, so a report arrives
-  /// with what is needed to reproduce it.
-  static Future<Uri> _feedbackEmail() async {
-    var appVersion = 'unknown';
-    try {
-      final info = await PackageInfo.fromPlatform();
-      appVersion = '${info.version} (${info.buildNumber})';
-    } catch (error) {
-      debugPrint('Could not read app version: $error');
-    }
-    final osName = Platform.isIOS ? 'iOS' : Platform.operatingSystem;
-    final body =
-        '\n\n---\n'
-        'App version: $appVersion\n'
-        '$osName version: ${Platform.operatingSystemVersion}\n';
-
-    // Built by hand: Uri.queryParameters encodes spaces as "+", which mail
-    // clients show literally.
-    return Uri.parse(
-      'mailto:${AppConstants.feedbackEmail}'
-      '?subject=${Uri.encodeComponent('OurGarage feedback')}'
-      '&body=${Uri.encodeComponent(body)}',
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -425,16 +387,15 @@ class _FeedbackSection extends StatelessWidget {
         ListTile(
           leading: const Icon(Icons.star_outline),
           title: const Text('Rate OurGarage'),
-          onTap: () =>
-              _open(context, Uri.parse(AppConstants.appStoreReviewUrl)),
+          onTap: () => openExternal(
+            ScaffoldMessenger.of(context),
+            Uri.parse(AppConstants.appStoreReviewUrl),
+          ),
         ),
         ListTile(
           leading: const Icon(Icons.mail_outline),
           title: const Text('Something wrong? Message me'),
-          onTap: () async {
-            final uri = await _feedbackEmail();
-            if (context.mounted) await _open(context, uri);
-          },
+          onTap: () => openFeedbackEmail(ScaffoldMessenger.of(context)),
         ),
       ],
     );
