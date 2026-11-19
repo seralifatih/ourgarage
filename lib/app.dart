@@ -11,6 +11,7 @@ import 'data/repositories/database_holder.dart';
 import 'features/reminders/odometer_nudge_provider.dart';
 import 'data/sync/sync_providers.dart';
 import 'features/household/forget_household.dart';
+import 'features/notifications/notification_permission.dart';
 import 'features/household/household_migration_provider.dart';
 import 'features/household/household_premium_claim.dart';
 import 'features/reminders/reminder_notification_scheduler.dart';
@@ -55,6 +56,9 @@ class _OurGarageAppState extends ConsumerState<OurGarageApp>
     if (state == AppLifecycleState.resumed) {
       unawaited(_rescheduleAll());
       unawaited(_syncIfSharing());
+      // Notifications may have been switched on or off in iOS Settings
+      // while the app was in the background.
+      ref.invalidate(notificationPermissionProvider);
       unawaited(ref.read(reviewPromptServiceProvider).recordAppOpen());
     }
   }
@@ -87,7 +91,8 @@ class _OurGarageAppState extends ConsumerState<OurGarageApp>
     // purchase to this account. Only when there is something to gain, so a
     // resume normally costs no RevenueCat call.
     final ownPremium = ref.read(purchaseServiceProvider).isPremium;
-    final householdPremium = await DatabaseHolder.instance
+    final householdPremium = await DatabaseHolder
+        .instance
         .householdEntitlementDao
         .isHouseholdPremium();
     if (ownPremium && !householdPremium) {

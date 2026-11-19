@@ -93,6 +93,10 @@ abstract interface class NotificationPlugin {
 
   /// Whether notifications are already allowed, or null when unknowable.
   Future<bool?> areNotificationsEnabled();
+
+  /// Opens this app's notification settings in the system Settings app.
+  /// Returns whether anything opened.
+  Future<bool> openNotificationSettings();
 }
 
 /// [NotificationPlugin] backed by the real plugin.
@@ -165,15 +169,47 @@ class FlutterLocalNotificationPlugin implements NotificationPlugin {
   }
 
   @override
-  Future<bool?> areNotificationsEnabled() {
+  Future<bool?> areNotificationsEnabled() async {
     final android = _plugin
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
         >();
     if (android != null) return android.areNotificationsEnabled();
 
-    // iOS offers no synchronous "already granted?" check through this plugin.
-    return Future<bool?>.value();
+    // UNUserNotificationCenter.getNotificationSettings, available since
+    // iOS 10, so fine on the iOS 15 test iPad. Not-yet-asked reads as false,
+    // like denied: either way nothing will be shown.
+    final ios = _plugin
+        .resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin
+        >();
+    if (ios != null) {
+      final options = await ios.checkPermissions();
+      if (options == null) return null;
+      return options.isEnabled || options.isProvisionalEnabled;
+    }
+    return null;
+  }
+
+  @override
+  Future<bool> openNotificationSettings() async {
+    // iOS 15.4+ lands on the app's Notifications page; 15.0–15.3 fall back,
+    // inside the plugin, to the app's own Settings page, which lists
+    // Notifications as its first row.
+    final ios = _plugin
+        .resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin
+        >();
+    if (ios != null) return await ios.openAppNotificationSettings() ?? false;
+
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    if (android != null) {
+      return await android.openAppNotificationSettings() ?? false;
+    }
+    return false;
   }
 }
 
@@ -271,11 +307,14 @@ class NotificationService {
   /// gate notifications this way (Android below 13 grants implicitly).
   Future<bool?> requestPermissions() => _plugin.requestPermissions();
 
-  /// Whether the app has already been granted notification permission.
+  /// Whether the app may show notifications right now.
   ///
-  /// Null means unknown — iOS offers no such check through this plugin, so
-  /// callers should ask and let the OS decide.
+  /// False both when the user declined and when they were never asked. Null
+  /// only where the platform can't say.
   Future<bool?> hasPermission() => _plugin.areNotificationsEnabled();
+
+  /// Opens the system Settings page where notifications are switched on.
+  Future<bool> openSettings() => _plugin.openNotificationSettings();
 
   /// Schedules the reminder for [ruleId] at 09:00 local time on [dueDate].
   ///

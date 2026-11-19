@@ -100,6 +100,14 @@ class _FakePlugin implements NotificationPlugin {
   @override
   Future<bool?> areNotificationsEnabled() async => permissionResult;
 
+  int openSettingsCount = 0;
+
+  @override
+  Future<bool> openNotificationSettings() async {
+    openSettingsCount++;
+    return true;
+  }
+
   @override
   Future<List<PendingNotificationRequest>> pendingNotificationRequests() {
     return Future.value([
@@ -453,6 +461,19 @@ void main() {
 
       plugin.permissionResult = true;
       expect(await service.requestPermissions(), isTrue);
+    });
+
+    test('hasPermission reports the platform status, null included', () async {
+      plugin.permissionResult = false;
+      expect(await service.hasPermission(), isFalse);
+
+      plugin.permissionResult = null;
+      expect(await service.hasPermission(), isNull);
+    });
+
+    test('openSettings hands off to the platform', () async {
+      expect(await service.openSettings(), isTrue);
+      expect(plugin.openSettingsCount, 1);
     });
   });
 

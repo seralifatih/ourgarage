@@ -21,6 +21,7 @@ import '../../services/notification_service_provider.dart';
 import '../../debug/demo_data.dart';
 import '../account/account_deletion_service.dart';
 import '../export/export_service.dart';
+import '../notifications/notification_permission.dart';
 import '../../services/purchase_service_provider.dart';
 import '../paywall/paywall_providers.dart';
 
@@ -64,6 +65,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         children: [
           const _PurchasesSection(),
+          const _NotificationsSection(),
           const _ExportSection(),
           const _HouseholdSection(),
           const _FeedbackSection(),
@@ -143,6 +145,39 @@ class _PurchasesSectionState extends ConsumerState<_PurchasesSection> {
           onTap: _restoring ? null : _restore,
         ),
       ],
+    );
+  }
+}
+
+/// "Notifications: On/Off".
+///
+/// Without this a declined permission left no trace anywhere: reminders kept
+/// being created and scheduled, and none of them ever appeared. Off offers
+/// "Turn on", which asks if iOS still allows asking and otherwise opens this
+/// app's page in the Settings app. Hidden while the status is loading or
+/// can't be read.
+class _NotificationsSection extends ConsumerWidget {
+  const _NotificationsSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final enabled = ref.watch(notificationPermissionProvider).asData?.value;
+    if (enabled == null) return const SizedBox.shrink();
+
+    return ListTile(
+      leading: Icon(
+        enabled
+            ? Icons.notifications_active_outlined
+            : Icons.notifications_off_outlined,
+      ),
+      title: const Text('Notifications'),
+      subtitle: Text(enabled ? 'On' : 'Off — reminders can’t alert you'),
+      trailing: enabled
+          ? null
+          : TextButton(
+              onPressed: () => turnOnNotifications(ref),
+              child: const Text('Turn on'),
+            ),
     );
   }
 }

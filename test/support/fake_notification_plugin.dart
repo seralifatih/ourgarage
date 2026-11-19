@@ -57,11 +57,30 @@ class FakeNotificationPlugin implements NotificationPlugin {
     ]);
   }
 
-  @override
-  Future<bool?> requestPermissions() async => true;
+  /// What [requestPermissions] answers; flips [enabled] when granted.
+  bool? requestResult = true;
+  int requestCount = 0;
+
+  /// What [areNotificationsEnabled] answers.
+  bool? enabled = true;
+
+  int openSettingsCount = 0;
 
   @override
-  Future<bool?> areNotificationsEnabled() async => true;
+  Future<bool?> requestPermissions() async {
+    requestCount++;
+    if (requestResult == true) enabled = true;
+    return requestResult;
+  }
+
+  @override
+  Future<bool?> areNotificationsEnabled() async => enabled;
+
+  @override
+  Future<bool> openNotificationSettings() async {
+    openSettingsCount++;
+    return true;
+  }
 }
 
 /// Overrides [notificationServiceProvider] with a platform-free service.

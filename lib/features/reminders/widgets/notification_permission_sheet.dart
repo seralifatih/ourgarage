@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../services/notification_service_provider.dart';
+import '../../notifications/notification_permission.dart';
 
 /// Explains what notifications are for, then asks the OS for permission.
 ///
@@ -101,6 +102,7 @@ class _NotificationPermissionSheetState
     final granted = await ref
         .read(notificationServiceProvider)
         .requestPermissions();
+    ref.invalidate(notificationPermissionProvider);
 
     if (mounted) Navigator.of(context).pop(granted ?? false);
   }

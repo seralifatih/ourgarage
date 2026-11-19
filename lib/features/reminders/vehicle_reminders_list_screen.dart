@@ -6,6 +6,7 @@ import '../../app_routes.dart';
 import '../../data/models/service_type.dart';
 import '../../data/repositories/providers.dart';
 import '../../data/repositories/stream_providers.dart';
+import '../notifications/notification_permission.dart';
 import 'reminder_engine.dart';
 import 'reminder_interval_summary.dart';
 import 'reminder_notification_scheduler.dart';
@@ -26,24 +27,34 @@ class VehicleRemindersListScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Reminders')),
-      body: vehicleAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text('$error')),
-        data: (vehicle) {
-          if (vehicle == null) {
-            return const Center(child: Text('Vehicle not found'));
-          }
+      body: Column(
+        children: [
+          // Above everything else: the rules below only matter if they can
+          // actually alert someone.
+          const NotificationsOffBanner(),
+          Expanded(
+            child: vehicleAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, _) => Center(child: Text('$error')),
+              data: (vehicle) {
+                if (vehicle == null) {
+                  return const Center(child: Text('Vehicle not found'));
+                }
 
-          return rowsAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, _) => Center(child: Text('$error')),
-            data: (rows) => _RemindersList(
-              vehicleId: vehicleId,
-              distanceUnit: vehicle.odometerUnit,
-              rows: rows,
+                return rowsAsync.when(
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (error, _) => Center(child: Text('$error')),
+                  data: (rows) => _RemindersList(
+                    vehicleId: vehicleId,
+                    distanceUnit: vehicle.odometerUnit,
+                    rows: rows,
+                  ),
+                );
+              },
             ),
-          );
-        },
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push(AppRoutes.addReminderRule(vehicleId)),
