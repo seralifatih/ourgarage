@@ -8,6 +8,9 @@
 #   ios-release  — automatic on master, straight to TestFlight
 #   ios-debug    — manual, any branch, also to TestFlight
 #
+# Plus ios-adhoc — manual, any branch, a signed Ad Hoc .ipa as an artefact
+# for installing on the test iPad without TestFlight (see that workflow).
+#
 # Both publish to TestFlight because the only physical test device is an iPad
 # on iOS 15.8.8, so every test cycle goes through TestFlight regardless.
 # The project's deployment target is iOS 15.0, so that device is supported —
@@ -389,3 +392,89 @@ workflows:
       - build/ios/archive/Runner.xcarchive/dSYMs/**/*.dSYM
 
     publishing: *testflight
+
+  # ---------------------------------------------------------------------------
+  # Ad hoc: any branch, manual, signed .ipa as an artefact (no TestFlight)
+  # ---------------------------------------------------------------------------
+  #
+  # For when TestFlight isn't an option: the build is signed with an Ad Hoc
+  # provisioning profile and installed straight onto the test iPad (iOS 15)
+  # from the .ipa this workflow produces. Nothing is uploaded to App Store
+  # Connect, so it consumes no TestFlight build number; the build number is
+  # whatever pubspec.yaml says.
+  #
+  # Before the first run, the iPad's UDID must be registered under
+  # Certificates, Identifiers & Profiles → Devices. An Ad Hoc profile only
+  # installs on devices it lists, and Codemagic creates/refreshes the profile
+  # from the devices registered at build time — a device registered later
+  # needs a new build.
+  #
+  # The release and debug workflows above are untouched; this one reuses the
+  # shared anchors only.
+  ios-adhoc:
+    name: iOS ad hoc → .ipa (manual)
+    <<: *instance
+
+    environment:
+      <<: *environment
+      groups: *groups
+      ios_signing:
+        # Fetches (or creates) an IOS_APP_ADHOC profile for the bundle id
+        # through the integration below, with the distribution certificate
+        # the other workflows already use.
+        distribution_type: ad_hoc
+        bundle_identifier: com.ourgarage.ourgarage
+      vars:
+        BUNDLE_ID: com.ourgarage.ourgarage
+
+    integrations:
+      app_store_connect: OurGarage ASC Key
+
+    # No `triggering:` block — started by hand, on any branch.
+
+    cache: *cache
+
+    scripts:
+      - *disable_spm
+      - *pub_get
+      - *codegen
+      - *analyze
+      - *test
+      - *pod_install
+      - *use_profiles
+
+      - name: Check export method is ad hoc
+        script: |
+          # use-profiles writes the export options from the installed
+          # profile. Fail here, readably, rather than at install time on the
+          # iPad if it ever picked an App Store profile instead. Xcode 15.3+
+          # calls the ad hoc method "release-testing"; older ones "ad-hoc".
+          METHOD=$(/usr/libexec/PlistBuddy -c "Print :method" \
+            /Users/builder/export_options.plist)
+          echo "Export method: $METHOD"
+          case "$METHOD" in
+            ad-hoc|release-testing) ;;
+            *) echo "Expected an ad hoc export method, got '$METHOD'"; exit 1 ;;
+          esac
+
+      - name: Build IPA (ad hoc)
+        script: |
+          flutter build ipa --release \
+            --export-options-plist=/Users/builder/export_options.plist \
+            --dart-define=SUPABASE_URL="$SUPABASE_URL" \
+            --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY" \
+            --dart-define=REVENUECAT_API_KEY="$REVENUECAT_IOS_KEY"
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - build/ios/archive/Runner.xcarchive/dSYMs/**/*.dSYM
+
+    publishing:
+      # The .ipa is the deliverable, so success is worth an email too: it
+      # carries the artefact download link.
+      email:
+        recipients:
+          - h.f.ilhan@gmail.com
+        notify:
+          success: true
+          failure: true
