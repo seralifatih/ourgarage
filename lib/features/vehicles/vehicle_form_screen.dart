@@ -106,9 +106,7 @@ class _VehicleFormState extends ConsumerState<_VehicleForm> {
     for (final controller in [_nickname, _odometer, _year]) {
       controller.addListener(_revalidate);
     }
-    // Fields without their own validators still need to trigger a revalidate
-    // for the odometer non-emptiness check (year is caught above already).
-    WidgetsBinding.instance.addPostFrameCallback((_) => _revalidate());
+    _formValid = _isFormValid();
   }
 
   @override
@@ -122,12 +120,23 @@ class _VehicleFormState extends ConsumerState<_VehicleForm> {
     super.dispose();
   }
 
+  /// Enables or disables Save without showing any error text.
+  ///
+  /// Not `FormState.validate()`: that paints every field's error at once,
+  /// including fields the user hasn't reached yet, so the form would open
+  /// covered in red. Errors appear per field, once touched, through
+  /// [AutovalidateMode.onUserInteraction].
   void _revalidate() {
-    final isValid = _formKey.currentState?.validate() ?? false;
+    final isValid = _isFormValid();
     if (isValid != _formValid) {
       setState(() => _formValid = isValid);
     }
   }
+
+  bool _isFormValid() =>
+      _validateNickname(_nickname.text) == null &&
+      _validateYear(_year.text) == null &&
+      _validateOdometer(_odometer.text) == null;
 
   @override
   Widget build(BuildContext context) {
@@ -137,7 +146,8 @@ class _VehicleFormState extends ConsumerState<_VehicleForm> {
       ),
       body: Form(
         key: _formKey,
-        autovalidateMode: AutovalidateMode.onUserInteraction,
+        // Per field, not here: a Form-level onUserInteraction validates
+        // every field as soon as any one is touched.
         onChanged: _revalidate,
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
@@ -152,6 +162,7 @@ class _VehicleFormState extends ConsumerState<_VehicleForm> {
                 hintText: 'e.g. Blue Civic',
                 border: OutlineInputBorder(),
               ),
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               validator: _validateNickname,
             ),
             const SizedBox(height: 12),
@@ -188,6 +199,7 @@ class _VehicleFormState extends ConsumerState<_VehicleForm> {
                 labelText: 'Year',
                 border: OutlineInputBorder(),
               ),
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               validator: _validateYear,
             ),
             const SizedBox(height: 12),
@@ -212,6 +224,7 @@ class _VehicleFormState extends ConsumerState<_VehicleForm> {
                       labelText: 'Current odometer',
                       border: OutlineInputBorder(),
                     ),
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                     validator: _validateOdometer,
                   ),
                 ),

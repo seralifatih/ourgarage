@@ -165,7 +165,7 @@ class _ServiceRecordFormState extends ConsumerState<_ServiceRecordForm> {
     for (final controller in [_customLabel, _odometer, _cost]) {
       controller.addListener(_revalidate);
     }
-    WidgetsBinding.instance.addPostFrameCallback((_) => _revalidate());
+    _formValid = _isFormValid();
   }
 
   @override
@@ -178,12 +178,19 @@ class _ServiceRecordFormState extends ConsumerState<_ServiceRecordForm> {
     super.dispose();
   }
 
+  /// Enables or disables Save without painting error text on fields the
+  /// user hasn't touched — see the vehicle form for why not `validate()`.
   void _revalidate() {
-    final isValid = _formKey.currentState?.validate() ?? false;
+    final isValid = _isFormValid();
     if (isValid != _formValid) {
       setState(() => _formValid = isValid);
     }
   }
+
+  bool _isFormValid() =>
+      _validateCustomLabel(_customLabel.text) == null &&
+      _validateOdometer(_odometer.text) == null &&
+      PremiumCostField.validateCost(_cost.text) == null;
 
   @override
   Widget build(BuildContext context) {
@@ -195,7 +202,8 @@ class _ServiceRecordFormState extends ConsumerState<_ServiceRecordForm> {
       ),
       body: Form(
         key: _formKey,
-        autovalidateMode: AutovalidateMode.onUserInteraction,
+        // Per field, not here: a Form-level onUserInteraction validates
+        // every field as soon as any one is touched.
         onChanged: _revalidate,
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
@@ -213,11 +221,8 @@ class _ServiceRecordFormState extends ConsumerState<_ServiceRecordForm> {
               onChanged: (value) {
                 if (value == null) return;
                 setState(() => _type = value);
-                // Re-validate on the next frame: the custom-label field's
-                // presence just changed, and its validator needs a fresh pass.
-                WidgetsBinding.instance.addPostFrameCallback(
-                  (_) => _revalidate(),
-                );
+                // The custom-label requirement just appeared or went away.
+                _revalidate();
               },
             ),
             if (_type == ServiceType.custom) ...[
@@ -230,6 +235,7 @@ class _ServiceRecordFormState extends ConsumerState<_ServiceRecordForm> {
                   hintText: 'e.g. Windshield replacement',
                   border: OutlineInputBorder(),
                 ),
+                autovalidateMode: AutovalidateMode.onUserInteraction,
                 validator: _validateCustomLabel,
               ),
             ],
@@ -247,6 +253,7 @@ class _ServiceRecordFormState extends ConsumerState<_ServiceRecordForm> {
                 suffixText: widget.vehicle.odometerUnit,
                 border: const OutlineInputBorder(),
               ),
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               validator: _validateOdometer,
             ),
             const SizedBox(height: 12),

@@ -29,7 +29,8 @@ class PremiumCostField extends StatelessWidget {
         labelText: 'Cost',
         border: OutlineInputBorder(),
       ),
-      validator: _validateCost,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      validator: validateCost,
     );
 
     final currencyField = TextFormField(
@@ -74,7 +75,8 @@ class PremiumCostField extends StatelessWidget {
     );
   }
 
-  static String? _validateCost(String? raw) {
+  /// Shared with the form, which checks it to enable Save.
+  static String? validateCost(String? raw) {
     final value = raw?.trim() ?? '';
     if (value.isEmpty) return null; // optional
 
