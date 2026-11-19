@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/local/database.dart';
 import '../../../data/repositories/providers.dart';
+import '../../reminders/odometer_nudge_provider.dart';
+import '../../reminders/reminder_notification_scheduler.dart';
+import 'odometer_format.dart';
 
 /// Bottom sheet for recording a fresh odometer reading.
 class OdometerUpdateSheet extends ConsumerStatefulWidget {
@@ -108,26 +111,90 @@ class _OdometerUpdateSheetState extends ConsumerState<OdometerUpdateSheet> {
     final value = int.tryParse(raw?.trim() ?? '');
     if (value == null) return 'Enter a number';
     if (value < 0) return 'Reading cannot be negative';
-
-    // Odometers don't run backwards. Blocking this catches typos before they
-    // corrupt the reminder maths, which keys off distance travelled.
-    if (value < widget.vehicle.odometer) {
-      return 'Cannot be lower than the current reading '
-          '(${widget.vehicle.odometer})';
-    }
+    // A lower reading is not an error here: this sheet is also how a mistyped
+    // reading gets fixed. [_save] asks before going backwards.
     return null;
   }
 
   Future<void> _save() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    setState(() => _saving = true);
     final value = int.parse(_controller.text.trim());
 
-    await ref
-        .read(vehicleRepositoryProvider)
-        .updateOdometer(widget.vehicle.id, value);
+    // Odometers don't run backwards, so a lower value is either a typo now or
+    // the correction of an earlier one. Without this path an over-entered
+    // reading (1285000 for 128500) could never be undone, and every distance
+    // reminder would stay wrong for good.
+    if (value < widget.vehicle.odometer && !await _confirmCorrection(value)) {
+      return;
+    }
+    if (!mounted) return;
+
+    setState(() => _saving = true);
+
+    // Every provider is read before the first await; the sheet may close
+    // while the writes are still in flight.
+    final vehicles = ref.read(vehicleRepositoryProvider);
+    final scheduler = ref.read(reminderNotificationSchedulerProvider);
+    final nudge = ref.read(odometerNudgeServiceProvider);
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      await vehicles.updateOdometer(widget.vehicle.id, value);
+    } catch (error, stack) {
+      debugPrint('Odometer update failed: $error\n$stack');
+      if (!mounted) return;
+      setState(() => _saving = false);
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text("Couldn't save the reading. Please try again."),
+          ),
+        );
+      return;
+    }
 
     if (mounted) Navigator.of(context).pop();
+
+    // On-screen statuses follow the vehicle stream by themselves; scheduled
+    // notifications and the nudge don't, so they are rebuilt from the new
+    // reading. The reading is already saved, so a failure here is only
+    // logged — the next app resume rebuilds the schedule anyway.
+    try {
+      await scheduler.rescheduleAll();
+      await nudge.refreshNudge(from: DateTime.now());
+    } catch (error, stack) {
+      debugPrint('Rescheduling after odometer update failed: $error\n$stack');
+    }
+  }
+
+  /// Asks before saving a reading lower than the current one.
+  Future<bool> _confirmCorrection(int value) async {
+    final unit = widget.vehicle.odometerUnit;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Correct a typo?'),
+        content: Text(
+          '${formatOdometer(value)} $unit is lower than the current reading, '
+          '${formatOdometer(widget.vehicle.odometer)} $unit.\n\n'
+          'Odometers only go up, so only do this to fix a reading that was '
+          'entered wrong. Reminders are recalculated from the corrected '
+          'value.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Correct reading'),
+          ),
+        ],
+      ),
+    );
+    return confirmed ?? false;
   }
 }

@@ -128,12 +128,10 @@ class _VehicleDetailView extends ConsumerWidget {
     );
   }
 
-  /// Opens the odometer sheet, which writes through `updateOdometer`.
+  /// Opens the odometer sheet, which writes the reading and reschedules.
   ///
   /// Reminder statuses are derived from the vehicle's odometer on every build,
   /// so the reminders list re-evaluates itself as soon as the write lands.
-  /// Rescheduling the OS-level notifications is Phase 3's job — the scheduler
-  /// doesn't exist yet, so there is nothing further to call from here.
   Future<void> _updateOdometer(BuildContext context) {
     return OdometerUpdateSheet.show(context, vehicle);
   }

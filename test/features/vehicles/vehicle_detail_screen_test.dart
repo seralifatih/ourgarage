@@ -11,6 +11,7 @@ import 'package:ourgarage/data/repositories/premium_status_provider.dart';
 import 'package:ourgarage/features/vehicles/vehicle_detail_screen.dart';
 
 import '../../support/fake_auth_backend.dart';
+import '../../support/fake_notification_plugin.dart';
 
 const _vehicleId = 'v1';
 
@@ -20,6 +21,7 @@ Future<void> _pumpDetail(
   WidgetTester tester, {
   bool premium = false,
   FakeAuthBackend? auth,
+  FakeNotificationPlugin? notifications,
 }) async {
   final router = GoRouter(
     initialLocation: '/vehicle/$_vehicleId',
@@ -65,6 +67,7 @@ Future<void> _pumpDetail(
       overrides: [
         premiumStatusProvider.overrideWith((ref) => premium),
         fakeAuthServiceOverride(auth),
+        fakeNotificationServiceOverride(notifications),
       ],
       child: MaterialApp.router(routerConfig: router),
     ),
@@ -251,6 +254,103 @@ void main() {
       expect(find.text('Due in 200 mi'), findsOneWidget);
 
       await _drainPendingTimers(tester);
+    });
+
+    group('correcting a mistyped reading (audit #1)', () {
+      Future<void> enterReading(WidgetTester tester, String value) async {
+        await tester.tap(find.widgetWithText(OutlinedButton, 'Update'));
+        await _settle(tester);
+        await tester.enterText(
+          find.widgetWithText(TextFormField, 'Current reading'),
+          value,
+        );
+        await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+        await _settle(tester);
+      }
+
+      Future<int> storedOdometer() async {
+        final vehicle = await (db.select(
+          db.vehicles,
+        )..where((v) => v.id.equals(_vehicleId))).getSingle();
+        return vehicle.odometer;
+      }
+
+      testWidgets('a lower reading asks before saving', (tester) async {
+        await insertVehicle(odometer: 1285000);
+        await _pumpDetail(tester);
+
+        await enterReading(tester, '128500');
+
+        expect(find.text('Correct a typo?'), findsOneWidget);
+        expect(find.textContaining('128,500 km is lower'), findsOneWidget);
+        expect(find.textContaining('1,285,000 km'), findsWidgets);
+        expect(await storedOdometer(), 1285000, reason: 'nothing saved yet');
+
+        await _drainPendingTimers(tester);
+      });
+
+      testWidgets('Cancel keeps the old reading and the sheet open', (
+        tester,
+      ) async {
+        await insertVehicle(odometer: 1285000);
+        await _pumpDetail(tester);
+        await enterReading(tester, '128500');
+
+        await tester.tap(find.widgetWithText(TextButton, 'Cancel').last);
+        await _settle(tester);
+
+        expect(find.text('Correct a typo?'), findsNothing);
+        expect(find.text('Update odometer'), findsOneWidget);
+        expect(await storedOdometer(), 1285000);
+
+        await _drainPendingTimers(tester);
+      });
+
+      testWidgets('confirming saves it and recalculates reminders', (
+        tester,
+      ) async {
+        final notifications = FakeNotificationPlugin();
+        await insertVehicle(odometer: 1285000, unit: 'mi');
+        // Due at 10000 + 8000 = 18000: hugely overdue at the typo reading.
+        await insertRule(
+          id: 'r1',
+          intervalDistance: 8000,
+          lastDoneOdometer: 10000,
+        );
+        await _pumpDetail(tester, notifications: notifications);
+        expect(find.textContaining('Overdue'), findsOneWidget);
+
+        await enterReading(tester, '12500');
+        await tester.tap(find.widgetWithText(FilledButton, 'Correct reading'));
+        await _settle(tester);
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 100)),
+        );
+        await _settle(tester);
+
+        expect(await storedOdometer(), 12500);
+        expect(find.text('Update odometer'), findsNothing);
+        expect(find.text('Due in 5500 mi'), findsOneWidget);
+        expect(
+          notifications.cancelAllCount,
+          greaterThan(0),
+          reason: 'scheduled notifications are rebuilt from the new reading',
+        );
+
+        await _drainPendingTimers(tester);
+      });
+
+      testWidgets('a higher reading saves without asking', (tester) async {
+        await insertVehicle(odometer: 12500);
+        await _pumpDetail(tester);
+
+        await enterReading(tester, '13000');
+
+        expect(find.text('Correct a typo?'), findsNothing);
+        expect(await storedOdometer(), 13000);
+
+        await _drainPendingTimers(tester);
+      });
     });
   });
 
