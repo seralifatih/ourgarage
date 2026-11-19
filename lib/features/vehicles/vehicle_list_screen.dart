@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app_routes.dart';
+import '../../core/widgets/load_error_view.dart';
 import '../../data/local/database.dart';
+import '../../data/repositories/stream_providers.dart';
 import '../../services/review_prompt_service.dart';
 import 'add_vehicle_gate.dart';
 import 'vehicle_list_providers.dart';
@@ -32,11 +34,20 @@ class VehicleListScreen extends ConsumerWidget {
       ),
       body: entries.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) {
+        error: (error, stack) {
           // An error screen rules out a rating prompt for this session.
           // Setting the flag is idempotent, so it is safe from build.
           ref.read(reviewPromptServiceProvider).markBadMoment();
-          return _ErrorView(error: error);
+          return LoadErrorView(
+            message: "Couldn't load your garage",
+            error: error,
+            stackTrace: stack,
+            onRetry: () {
+              // The list is derived from these two streams.
+              ref.invalidate(vehiclesStreamProvider);
+              ref.invalidate(activeReminderRulesStreamProvider);
+            },
+          );
         },
         data: (list) => list.isEmpty
             ? VehicleListEmptyState(
@@ -85,42 +96,5 @@ class _VehicleList extends StatelessWidget {
 
   void _openOdometerSheet(BuildContext context, Vehicle vehicle) {
     OdometerUpdateSheet.show(context, vehicle);
-  }
-}
-
-class _ErrorView extends StatelessWidget {
-  const _ErrorView({required this.error});
-
-  final Object error;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.error_outline, size: 40, color: theme.colorScheme.error),
-            const SizedBox(height: 12),
-            Text(
-              "Couldn't load your garage",
-              style: theme.textTheme.titleMedium,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '$error',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

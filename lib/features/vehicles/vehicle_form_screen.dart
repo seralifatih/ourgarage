@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app_routes.dart';
+import '../../core/widgets/load_error_view.dart';
 import '../../data/local/database.dart';
 import '../../data/repositories/providers.dart';
 import '../../data/repositories/stream_providers.dart';
@@ -39,9 +40,14 @@ class VehicleFormScreen extends ConsumerWidget {
         appBar: AppBar(title: const Text('Edit vehicle')),
         body: const Center(child: CircularProgressIndicator()),
       ),
-      error: (error, _) => Scaffold(
+      error: (error, stack) => Scaffold(
         appBar: AppBar(title: const Text('Edit vehicle')),
-        body: Center(child: Text('$error')),
+        body: LoadErrorView(
+          message: "Couldn't load this vehicle",
+          error: error,
+          stackTrace: stack,
+          onRetry: () => ref.invalidate(vehicleStreamProvider(vehicleId!)),
+        ),
       ),
       data: (vehicle) {
         if (vehicle == null) {

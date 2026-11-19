@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/widgets/load_error_view.dart';
 import '../../data/local/database.dart';
 import '../../data/models/service_type.dart';
 import '../../data/repositories/providers.dart';
@@ -42,11 +43,16 @@ class ReminderRuleFormScreen extends ConsumerWidget {
         ),
         body: const Center(child: CircularProgressIndicator()),
       ),
-      error: (error, _) => Scaffold(
+      error: (error, stack) => Scaffold(
         appBar: AppBar(
           title: Text(isEditing ? 'Edit reminder' : 'Add reminder'),
         ),
-        body: Center(child: Text('$error')),
+        body: LoadErrorView(
+          message: "Couldn't load this vehicle",
+          error: error,
+          stackTrace: stack,
+          onRetry: () => ref.invalidate(vehicleStreamProvider(vehicleId)),
+        ),
       ),
       data: (vehicle) {
         if (vehicle == null) {
@@ -68,9 +74,15 @@ class ReminderRuleFormScreen extends ConsumerWidget {
             appBar: AppBar(title: const Text('Edit reminder')),
             body: const Center(child: CircularProgressIndicator()),
           ),
-          error: (error, _) => Scaffold(
+          error: (error, stack) => Scaffold(
             appBar: AppBar(title: const Text('Edit reminder')),
-            body: Center(child: Text('$error')),
+            body: LoadErrorView(
+              message: "Couldn't load this reminder",
+              error: error,
+              stackTrace: stack,
+              onRetry: () =>
+                  ref.invalidate(reminderRulesStreamProvider(vehicleId)),
+            ),
           ),
           data: (rules) {
             final rule = rules.where((r) => r.id == ruleId).firstOrNull;

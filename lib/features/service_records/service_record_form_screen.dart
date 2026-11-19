@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/widgets/load_error_view.dart';
 import '../../data/local/database.dart';
 import '../../data/models/service_type.dart';
 import '../../data/repositories/premium_status_provider.dart';
@@ -47,9 +48,14 @@ class ServiceRecordFormScreen extends ConsumerWidget {
         appBar: AppBar(title: Text(isEditing ? 'Edit service' : 'Add service')),
         body: const Center(child: CircularProgressIndicator()),
       ),
-      error: (error, _) => Scaffold(
+      error: (error, stack) => Scaffold(
         appBar: AppBar(title: Text(isEditing ? 'Edit service' : 'Add service')),
-        body: Center(child: Text('$error')),
+        body: LoadErrorView(
+          message: "Couldn't load this vehicle",
+          error: error,
+          stackTrace: stack,
+          onRetry: () => ref.invalidate(vehicleStreamProvider(vehicleId)),
+        ),
       ),
       data: (vehicle) {
         if (vehicle == null) {
@@ -73,9 +79,15 @@ class ServiceRecordFormScreen extends ConsumerWidget {
             appBar: AppBar(title: const Text('Edit service')),
             body: const Center(child: CircularProgressIndicator()),
           ),
-          error: (error, _) => Scaffold(
+          error: (error, stack) => Scaffold(
             appBar: AppBar(title: const Text('Edit service')),
-            body: Center(child: Text('$error')),
+            body: LoadErrorView(
+              message: "Couldn't load this service record",
+              error: error,
+              stackTrace: stack,
+              onRetry: () =>
+                  ref.invalidate(serviceRecordsStreamProvider(vehicleId)),
+            ),
           ),
           data: (record) {
             if (record == null) {

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app_routes.dart';
+import '../../core/widgets/load_error_view.dart';
 import '../../core/theme.dart';
 import '../../data/local/database.dart';
 import '../../data/repositories/stream_providers.dart';
@@ -26,7 +27,12 @@ class UpdateOdometersScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('Update odometers')),
       body: vehiclesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text('$error')),
+        error: (error, stack) => LoadErrorView(
+          message: "Couldn't load your vehicles",
+          error: error,
+          stackTrace: stack,
+          onRetry: () => ref.invalidate(vehiclesStreamProvider),
+        ),
         data: (vehicles) {
           if (vehicles.isEmpty) {
             return const Center(child: Text('No vehicles yet'));

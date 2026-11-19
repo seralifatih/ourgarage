@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app_routes.dart';
+import '../../core/widgets/load_error_view.dart';
 import '../../data/models/service_type.dart';
 import '../../data/repositories/providers.dart';
 import '../../data/repositories/stream_providers.dart';
@@ -35,7 +36,12 @@ class VehicleRemindersListScreen extends ConsumerWidget {
           Expanded(
             child: vehicleAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) => Center(child: Text('$error')),
+              error: (error, stack) => LoadErrorView(
+                message: "Couldn't load this vehicle",
+                error: error,
+                stackTrace: stack,
+                onRetry: () => ref.invalidate(vehicleStreamProvider(vehicleId)),
+              ),
               data: (vehicle) {
                 if (vehicle == null) {
                   return const Center(child: Text('Vehicle not found'));
@@ -44,7 +50,13 @@ class VehicleRemindersListScreen extends ConsumerWidget {
                 return rowsAsync.when(
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
-                  error: (error, _) => Center(child: Text('$error')),
+                  error: (error, stack) => LoadErrorView(
+                    message: "Couldn't load reminders",
+                    error: error,
+                    stackTrace: stack,
+                    onRetry: () =>
+                        ref.invalidate(reminderRulesStreamProvider(vehicleId)),
+                  ),
                   data: (rows) => _RemindersList(
                     vehicleId: vehicleId,
                     distanceUnit: vehicle.odometerUnit,

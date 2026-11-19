@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app_routes.dart';
+import '../../core/widgets/load_error_view.dart';
 import '../../data/local/database.dart';
 import '../../data/repositories/premium_status_provider.dart';
 import '../../data/repositories/providers.dart';
@@ -37,7 +38,14 @@ class VehicleDetailScreen extends ConsumerWidget {
     return vehicleAsync.when(
       loading: () =>
           const _Shell(body: Center(child: CircularProgressIndicator())),
-      error: (error, _) => _Shell(body: Center(child: Text('$error'))),
+      error: (error, stack) => _Shell(
+        body: LoadErrorView(
+          message: "Couldn't load this vehicle",
+          error: error,
+          stackTrace: stack,
+          onRetry: () => ref.invalidate(vehicleStreamProvider(vehicleId)),
+        ),
+      ),
       data: (vehicle) {
         if (vehicle == null) {
           // Reached after deleting the vehicle, or via a stale link.
@@ -103,7 +111,14 @@ class _VehicleDetailView extends ConsumerWidget {
           const Divider(height: 1),
           remindersAsync.when(
             loading: () => const _SectionLoader(),
-            error: (error, _) => _SectionError(error: error),
+            error: (error, stack) => LoadErrorView(
+              message: "Couldn't load reminders",
+              error: error,
+              stackTrace: stack,
+              compact: true,
+              onRetry: () =>
+                  ref.invalidate(reminderRulesStreamProvider(vehicle.id)),
+            ),
             data: (reminders) => VehicleRemindersSection(
               reminders: reminders,
               distanceUnit: vehicle.odometerUnit,
@@ -113,7 +128,14 @@ class _VehicleDetailView extends ConsumerWidget {
           const Divider(height: 1),
           recordsAsync.when(
             loading: () => const _SectionLoader(),
-            error: (error, _) => _SectionError(error: error),
+            error: (error, stack) => LoadErrorView(
+              message: "Couldn't load service history",
+              error: error,
+              stackTrace: stack,
+              compact: true,
+              onRetry: () =>
+                  ref.invalidate(serviceRecordsStreamProvider(vehicle.id)),
+            ),
             data: (records) => ServiceHistorySection(
               records: records,
               distanceUnit: vehicle.odometerUnit,
@@ -280,27 +302,6 @@ class _SectionLoader extends StatelessWidget {
     return const Padding(
       padding: EdgeInsets.all(24),
       child: Center(child: CircularProgressIndicator()),
-    );
-  }
-}
-
-class _SectionError extends StatelessWidget {
-  const _SectionError({required this.error});
-
-  final Object error;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Text(
-        '$error',
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: theme.colorScheme.error,
-        ),
-      ),
     );
   }
 }
